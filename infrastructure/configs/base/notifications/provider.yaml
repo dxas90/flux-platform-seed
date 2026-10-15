@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/provider-notification-v1beta3.json
+# Notification Provider — replace url with your actual webhook endpoint and uncomment the Secret ref.
+# The Provider is suspended by default; set spec.suspend: false to activate it.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: platform-alerts
+  namespace: flux-system
+spec:
+  # Options: slack, msteams, googlechat, discord, opsgenie, pagerduty, generic
+  type: slack
+  suspend: true
+  # address is the webhook URL; store it in a Secret and reference it via spec.secretRef.
+  # secretRef:
+  #   name: platform-alert-webhook

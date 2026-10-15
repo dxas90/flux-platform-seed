@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/alert-notification-v1beta3.json
+# Alert fires on Warning and Error events from every HelmRelease and Kustomization.
+# Suspended by default until the Provider webhook is configured.
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: platform-alerts
+  namespace: flux-system
+spec:
+  suspend: true
+  providerRef:
+    name: platform-alerts
+  eventSeverity: warning
+  eventSources:
+    - kind: HelmRelease
+      namespace: '*'
+      name: '*'
+    - kind: Kustomization
+      namespace: flux-system
+      name: '*'
+  exclusionList:
+    - ".*upgrade.*has.*already.*been.*triggered.*"

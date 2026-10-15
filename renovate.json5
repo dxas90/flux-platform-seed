@@ -35,12 +35,58 @@
   // Delay new releases by 3 days
   minimumReleaseAge: '3 days',
 
-  // FluxCD support (.yaml and .yml)
+  // FluxCD support (.yaml and .yml) — tracks HelmRelease chart versions and OCIRepository tags.
   flux: {
     managerFilePatterns: [
       '/\\.ya?ml$/',
     ],
   },
+
+  // Regex managers for resources that Renovate's built-in managers don't cover.
+  regexManagers: [
+    {
+      // FluxInstance distribution version in all flux-instance.yaml files.
+      description: 'FluxCD Flux Operator distribution version',
+      fileMatch: ['(^|/)flux-instance\\.ya?ml$'],
+      matchStrings: [
+        'version:\\s+(?<currentValue>[\\d.]+)\\s',
+      ],
+      depNameTemplate: 'fluxcd/flux2',
+      datasourceTemplate: 'github-releases',
+      extractVersionTemplate: '^v?(?<version>.+)$',
+    },
+    {
+      // gateway-api CRD release URL pinned in infrastructure/controllers/base/kustomization.yaml.
+      description: 'gateway-api CRD release version',
+      fileMatch: ['(^|/)kustomization\\.ya?ml$'],
+      matchStrings: [
+        'gateway-api/releases/download/(?<currentValue>v[\\d.]+)/standard-install\\.yaml',
+      ],
+      depNameTemplate: 'kubernetes-sigs/gateway-api',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      // prometheus-operator stripped-down CRDs URL.
+      description: 'prometheus-operator CRD release version',
+      fileMatch: ['(^|/)kustomization\\.ya?ml$'],
+      matchStrings: [
+        'prometheus-operator/releases/download/(?<currentValue>v[\\d.]+)/stripped-down-crds\\.yaml',
+      ],
+      depNameTemplate: 'prometheus-operator/prometheus-operator',
+      datasourceTemplate: 'github-releases',
+    },
+    {
+      // Flux Operator Helm chart pinned in scripts/kind-up.sh and bootstrap.sh.
+      description: 'flux-operator Helm chart version in shell scripts',
+      fileMatch: ['(^|/)scripts/.*\\.sh$'],
+      matchStrings: [
+        '--version\\s+(?<currentValue>[\\d.]+)',
+      ],
+      depNameTemplate: 'flux-operator',
+      registryUrlTemplate: 'https://fluxcd-community.github.io/helm-charts',
+      datasourceTemplate: 'helm',
+    },
+  ],
 
   packageRules: [
     {
@@ -52,6 +98,38 @@
       description: 'Never automerge major upgrades',
       matchUpdateTypes: ['major'],
       automerge: false,
+    },
+    {
+      // Group all grafana-community chart updates into one PR.
+      description: 'Group grafana-community chart bumps',
+      matchPackageNames: [
+        '/^oci:\\/\\/ghcr\\.io\\/grafana-community\\//',
+        '/^oci:\\/\\/ghcr\\.io\\/grafana\\//',
+      ],
+      groupName: 'grafana charts',
+    },
+    {
+      // Group fluxcd ecosystem updates.
+      description: 'Group FluxCD ecosystem bumps',
+      matchPackageNames: [
+        '/fluxcd/',
+        '/flux-operator/',
+      ],
+      groupName: 'fluxcd',
+    },
+    {
+      // Group prometheus-community chart updates.
+      description: 'Group prometheus-community chart bumps',
+      matchPackageNames: [
+        '/^oci:\\/\\/ghcr\\.io\\/prometheus-community\\//',
+      ],
+      groupName: 'prometheus charts',
+    },
+    {
+      // Only automerge OCI digest-only updates (no version bump risk).
+      description: 'Automerge digest pinning',
+      matchUpdateTypes: ['digest'],
+      automerge: true,
     },
   ],
 }
