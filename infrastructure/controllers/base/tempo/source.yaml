@@ -10,4 +10,4 @@ spec:
     operation: copy
   url: oci://ghcr.io/grafana/helm-charts/tempo
   ref:
-    tag: 1.24.3
+    tag: 1.24.4
