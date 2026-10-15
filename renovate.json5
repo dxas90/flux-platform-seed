@@ -1,22 +1,57 @@
+
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+
   extends: [
     'config:recommended',
-    ':automergeAll',
   ],
+
+  // Dependency dashboard
   dependencyDashboard: true,
   dependencyDashboardTitle: 'Renovate Dashboard 🤖',
+
+  // Notifications
   suppressNotifications: [
     'prEditedNotification',
     'prIgnoreNotification',
   ],
-  rebaseWhen: 'conflicted',
+
+  // Schedule: midnight to 5 AM (Warsaw time)
+  timezone: 'Europe/Warsaw',
   schedule: [
-    'before 5:30am',
+    '* 0-4 * * *',
   ],
-  automerge: true,
-  automergeType: 'pr',
+
+  // PR management
+  rebaseWhen: 'conflicted',
   pruneStaleBranches: true,
-  "flux": {"managerFilePatterns": ["/\\.yaml$/"]},
-  "packageRules": [{"matchManagers": ["flux"], "automerge": false}]
+  labels: ['dependencies', 'renovate'],
+
+  // Merge only after passing checks
+  automerge: false,
+  automergeType: 'pr',
+  ignoreTests: false,
+
+  // Delay new releases by 3 days
+  minimumReleaseAge: '3 days',
+
+  // FluxCD support (.yaml and .yml)
+  flux: {
+    managerFilePatterns: [
+      '/\\.ya?ml$/',
+    ],
+  },
+
+  packageRules: [
+    {
+      description: 'Automerge minor and patch updates, including FluxCD',
+      matchUpdateTypes: ['minor', 'patch'],
+      automerge: true,
+    },
+    {
+      description: 'Never automerge major upgrades',
+      matchUpdateTypes: ['major'],
+      automerge: false,
+    },
+  ],
 }
