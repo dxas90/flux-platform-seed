@@ -10,7 +10,7 @@ spec:
   suspend: true
   providerRef:
     name: platform-alerts
-  eventSeverity: warning
+  eventSeverity: error
   eventSources:
     - kind: HelmRelease
       namespace: '*'
