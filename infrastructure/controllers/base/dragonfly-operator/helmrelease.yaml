@@ -23,3 +23,21 @@ spec:
   chartRef:
     kind: OCIRepository
     name: dragonfly-operator
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          group: apps
+          version: v1
+          kind: Deployment
+          name: dragonfly-operator
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/1/resources
+            value:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi

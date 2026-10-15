@@ -23,5 +23,16 @@ spec:
           storage: 5Gi
   deployment:
     spec:
+      template:
+        spec:
+          containers:
+            - name: grafana
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  cpu: 1000m
+                  memory: 1Gi
       strategy:
         type: Recreate

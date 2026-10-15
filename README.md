@@ -148,6 +148,7 @@ Helm merges chart defaults, shared values, then environment values. Helm replace
 Review at least:
 
 - Storage sizes, StorageClasses, retention, replicas, requests, and limits
+- CPU/memory requests and limits for every rendered container; the checked-in values are starter examples only
 - Ingress, DNS, certificate issuers, and cloud IAM
 - Grafana authentication and alert receivers
 - Loki/Tempo storage and production high availability

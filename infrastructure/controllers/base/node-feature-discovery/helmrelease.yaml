@@ -28,3 +28,51 @@ spec:
         kind: HelmRepository
         name: node-feature-discovery
       interval: 30m
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          group: apps
+          version: v1
+          kind: DaemonSet
+          name: node-feature-discovery-worker
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+      - target:
+          group: apps
+          version: v1
+          kind: Deployment
+          name: node-feature-discovery-master
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+      - target:
+          group: apps
+          version: v1
+          kind: Deployment
+          name: node-feature-discovery-gc
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi

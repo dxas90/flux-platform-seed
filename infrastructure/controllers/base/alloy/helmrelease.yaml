@@ -29,3 +29,36 @@ spec:
       sourceRef:
         kind: HelmRepository
         name: alloy
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          group: apps
+          version: v1
+          kind: Deployment
+          name: alloy
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+      - target:
+          group: apps
+          version: v1
+          kind: Deployment
+          name: alloy
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/1/resources
+            value:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi

@@ -55,6 +55,20 @@ The default selection provides a broad local platform:
 
 Optional catalog entries are commented out in the base Kustomization.
 
+## Resource policy
+
+Every rendered Deployment, StatefulSet, and DaemonSet container—including init containers and chart sidecars—must define CPU and memory requests and limits. The seed uses conservative starter values rather than production sizing:
+
+| Profile | Requests | Limits | Typical use |
+|---|---|---|---|
+| Small | `10m`, `32Mi` | `100m`, `128Mi` | init containers and reload sidecars |
+| Default | `50m`, `64Mi` | `500m`, `512Mi` | lightweight controllers and agents |
+| Large | `100m`, `256Mi` | `1000m`, `1Gi` | ArgoCD and stateful observability services |
+
+Where a chart exposes stable resource values, prefer those values. Where it does not expose all generated containers consistently, the HelmRelease uses a Kustomize `postRenderer` scoped to the rendered workload and container index. `scripts/validate.py --helm` renders every chart, applies the post-renderers, and fails if any container lacks one of the four required fields.
+
+Treat these numbers as safe examples, not recommendations. Measure actual usage and override them by environment before production.
+
 ## Grafana is operator-managed
 
 The Grafana bundled with kube-prometheus-stack is disabled. Grafana Operator installs the CRDs and controller; the `configs` layer creates the Grafana instance and Prometheus, Loki, and Tempo datasources.

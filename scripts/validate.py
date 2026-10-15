@@ -109,6 +109,28 @@ def check_cluster(objects, path):
         visit(name)
 
 
+def check_workload_resources(objects, context):
+    """Require complete CPU/memory requests and limits on every workload container."""
+    missing = []
+    for obj in objects:
+        if obj.get('kind') not in ('Deployment', 'StatefulSet', 'DaemonSet'):
+            continue
+        pod_spec = obj.get('spec', {}).get('template', {}).get('spec', {})
+        for field in ('initContainers', 'containers'):
+            for container in pod_spec.get(field, []):
+                resources = container.get('resources') or {}
+                requests = resources.get('requests') or {}
+                limits = resources.get('limits') or {}
+                absent = [f'requests.{name}' for name in ('cpu', 'memory') if not requests.get(name)]
+                absent += [f'limits.{name}' for name in ('cpu', 'memory') if not limits.get(name)]
+                if absent:
+                    missing.append(
+                        f"{obj['kind']}/{obj['metadata'].get('namespace', '')}/{obj['metadata']['name']} "
+                        f"container={container.get('name')} missing={','.join(absent)}"
+                    )
+    assert not missing, f"workload resources missing in {context}:\n" + '\n'.join(missing)
+
+
 def render_chart(name, app_builds, tmp):
     sample = app_builds[0][1]
     hr = next(x for x in sample if x['kind'] == 'HelmRelease')
@@ -140,6 +162,22 @@ def render_chart(name, app_builds, tmp):
         output = run(cmd, env)
         rendered = documents(output)
         assert rendered, f'empty chart render: {cluster}/{name}'
+        post_renderers = spec.get('postRenderers', [])
+        if post_renderers:
+            post_dir = work / f'{cluster}-post-render'
+            post_dir.mkdir()
+            (post_dir / 'rendered.yaml').write_text(output)
+            patches = []
+            for renderer in post_renderers:
+                patches.extend(renderer.get('kustomize', {}).get('patches', []))
+            (post_dir / 'kustomization.yaml').write_text(yaml.safe_dump({
+                'apiVersion': 'kustomize.config.k8s.io/v1beta1',
+                'kind': 'Kustomization',
+                'resources': ['rendered.yaml'],
+                'patches': patches,
+            }, sort_keys=False))
+            rendered = documents(run(['kustomize', 'build', str(post_dir)]))
+        check_workload_resources(rendered, f'{cluster}/{name}')
         # Helm's output can contain generated credentials. Never persist or print it.
         count += len(rendered)
         if name == 'alloy':
@@ -156,7 +194,7 @@ def check_instance(obj, cluster):
     assert spec['sync']['path'] == f'clusters/{cluster}'
     assert spec['sync']['kind'] == 'GitRepository'
     assert 'pullSecret' not in spec['sync'], 'public seed must not require private Git credentials'
-    assert re.fullmatch(r'\d+\.\d+\.\d+', spec['distribution']['version']), 'pin the Flux distribution version'
+    assert spec['distribution']['version'] == '2.9.6', 'Flux version must match the validated distribution'
     assert spec['cluster']['networkPolicy'] is True
 
 
@@ -201,7 +239,12 @@ def main():
     for path in ROOT.rglob('*.yaml'):
         if not any(p in path.parts for p in ('.cache', '.venv')):
             documents(path.read_text())
-    json.loads((ROOT / 'renovate.json').read_text())
+    renovate = ROOT / 'renovate.json5'
+    if not renovate.exists():
+        renovate = ROOT / 'renovate.json'
+    assert renovate.exists(), 'missing Renovate configuration'
+    if renovate.suffix == '.json':
+        json.loads(renovate.read_text())
     builds = {}
     for path in sorted(ROOT.rglob('kustomization.yaml')):
         if any(p in path.parts for p in ('.cache', '.venv')):

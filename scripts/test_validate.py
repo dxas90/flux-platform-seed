@@ -77,5 +77,34 @@ class ValidationTests(unittest.TestCase):
             v.check_instance(instance, 'staging')
 
 
+    def test_workload_resources_rejects_missing_limit(self):
+        workload = {
+            'apiVersion': 'apps/v1',
+            'kind': 'Deployment',
+            'metadata': {'name': 'example', 'namespace': 'default'},
+            'spec': {'template': {'spec': {'containers': [{
+                'name': 'app',
+                'resources': {'requests': {'cpu': '10m', 'memory': '32Mi'}, 'limits': {'cpu': '100m'}},
+            }]}}},
+        }
+        with self.assertRaisesRegex(AssertionError, 'limits.memory'):
+            v.check_workload_resources([workload], 'mutation')
+
+    def test_workload_resources_accepts_complete_resources(self):
+        workload = {
+            'apiVersion': 'apps/v1',
+            'kind': 'Deployment',
+            'metadata': {'name': 'example', 'namespace': 'default'},
+            'spec': {'template': {'spec': {'containers': [{
+                'name': 'app',
+                'resources': {
+                    'requests': {'cpu': '10m', 'memory': '32Mi'},
+                    'limits': {'cpu': '100m', 'memory': '128Mi'},
+                },
+            }]}}},
+        }
+        v.check_workload_resources([workload], 'complete')
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

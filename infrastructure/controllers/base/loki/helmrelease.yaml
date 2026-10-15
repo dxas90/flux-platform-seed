@@ -23,3 +23,51 @@ spec:
   chartRef:
     kind: OCIRepository
     name: loki
+  postRenderers:
+  - kustomize:
+      patches:
+      - target:
+          group: apps
+          version: v1
+          kind: Deployment
+          name: loki-gateway
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
+      - target:
+          group: apps
+          version: v1
+          kind: StatefulSet
+          name: loki
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+      - target:
+          group: apps
+          version: v1
+          kind: StatefulSet
+          name: loki
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/1/resources
+            value:
+              requests:
+                cpu: 10m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi

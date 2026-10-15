@@ -26,7 +26,7 @@ def main():
         env = os.environ.copy()
         env.update(HELM_REPOSITORY_CONFIG=f'{tmp}/repositories.yaml', HELM_REPOSITORY_CACHE=f'{tmp}/repository', HELM_REGISTRY_CONFIG=f'{tmp}/registry.json', HELM_CACHE_HOME=f'{tmp}/cache', HELM_CONFIG_HOME=f'{tmp}/config', HELM_DATA_HOME=f'{tmp}/data')
         operator = v.documents(v.run(['helm', 'template', 'flux-operator', 'oci://ghcr.io/controlplaneio-fluxcd/charts/flux-operator', '--version', args.operator_version, '--namespace', 'flux-system', '--include-crds'], env))
-        flux = v.documents(v.run(['flux', 'install', '--export', '--version=v2.8.3', '--components-extra=source-watcher']))
+        flux = v.documents(v.run(['flux', 'install', '--export', '--version=v2.9.6', '--components-extra=source-watcher']))
         schemas = {}
         for obj in operator + flux:
             if obj['kind'] != 'CustomResourceDefinition':
@@ -50,7 +50,7 @@ def main():
                     continue
                 jsonschema.Draft7Validator(schemas[key]).validate(obj)
                 count += 1
-        print(f'PASS {count} custom resources against operator {args.operator_version} and Flux 2.8.3 CRDs (including ArtifactGenerator, ExternalArtifact consumer and Bucket)')
+        print(f'PASS {count} custom resources against operator {args.operator_version} and Flux 2.9.6 CRDs (including ArtifactGenerator, ExternalArtifact consumer and Bucket)')
 
 
 if __name__ == '__main__':

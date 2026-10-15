@@ -26,6 +26,9 @@ Rules:
 - Pin chart versions exactly.
 - Keep non-trivial Helm values in `values.yaml`, not inline in HelmRelease.
 - Keep source and HelmRelease in the release namespace.
+- Require CPU and memory requests and limits for every rendered app, sidecar, and init container.
+- Prefer documented chart resource values; use a narrowly targeted Helm post-renderer when the chart does not expose all containers.
+- Treat checked-in resource values as starter examples and measure before production.
 - Generate values ConfigMaps without name suffix hashes and label them for Flux watch reconciliation.
 - Use literal YAML block scalars for post-renderer patches.
 - Put controller CRs and other CRD consumers in `infrastructure/configs`, not beside the controller HelmRelease.
