@@ -71,3 +71,33 @@ spec:
               limits:
                 cpu: 1000m
                 memory: 1Gi
+      - target:
+          group: apps
+          version: v1
+          kind: StatefulSet
+          name: prometheus-kube-prometheus-stack-prometheus
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+      - target:
+          group: apps
+          version: v1
+          kind: StatefulSet
+          name: alertmanager-kube-prometheus-stack-alertmanager
+        patch: |
+          - op: add
+            path: /spec/template/spec/containers/0/resources
+            value:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
