@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: detect-private-key
+
+  - repo: local
+    hooks:
+      - id: repository-validation
+        name: repository validation
+        entry: uv run --with pyyaml==6.0.3 python scripts/validate.py
+        language: system
+        pass_filenames: false
+      - id: regression-tests
+        name: regression tests
+        entry: uv run --with pyyaml==6.0.3 python scripts/test_validate.py
+        language: system
+        pass_filenames: false

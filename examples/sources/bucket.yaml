@@ -1,0 +1,14 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: Bucket
+metadata:
+  name: platform-config
+  namespace: flux-system
+spec:
+  interval: 5m
+  provider: aws
+  bucketName: REPLACE_ME
+  region: us-east-2
+  endpoint: s3.us-east-2.amazonaws.com
+  prefix: platform/
+  secretRef:
+    name: platform-bucket-auth

@@ -1,0 +1,22 @@
+# Credentials and local state: never commit plaintext secrets.
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+*.kubeconfig
+kubeconfig
+kubeconfig.*
+age.key
+age.agekey
+*.agekey
+secrets.local/
+.cache/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+!scripts/
+!scripts/**

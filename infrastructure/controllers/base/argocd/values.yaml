@@ -1,0 +1,13 @@
+crds:
+  install: true
+  keep: true
+server:
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+configs:
+  cm:
+    application.resourceTrackingMethod: annotation
+  params:
+    server.insecure: false

@@ -1,0 +1,29 @@
+[tools]
+flux2 = "2.8.3"
+helm = "4.3.0"
+kind = "0.33.0"
+kubectl = "1.37.1"
+kustomize = "5.8.2"
+python = "3.13.13"
+pre-commit = "3.8.0"
+uv = "0.11.8"
+
+[tasks.validate]
+description = "Run text hygiene, manifest, dependency, and unit checks"
+run = "python scripts/check_text_files.py && python scripts/test_validate.py && python scripts/validate.py"
+
+[tasks."validate/helm"]
+description = "Download and render every pinned Helm chart"
+run = "python scripts/validate.py --helm"
+
+[tasks."validate/schemas"]
+description = "Validate custom resources against Flux and operator CRDs"
+run = "python scripts/validate_schemas.py --operator-version 0.61.0"
+
+[tasks."kind/up"]
+description = "Create kind, install Flux Operator, and apply the kind FluxInstance"
+run = "bash scripts/kind-up.sh"
+
+[tasks."kind/down"]
+description = "Delete the local kind cluster"
+run = "bash scripts/kind-down.sh"

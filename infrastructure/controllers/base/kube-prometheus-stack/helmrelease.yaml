@@ -1,0 +1,25 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: kube-prometheus-stack
+  namespace: observability
+spec:
+  interval: 30m
+  timeout: 10m
+  releaseName: kube-prometheus-stack
+  maxHistory: 3
+  install:
+    remediation:
+      retries: 3
+    crds: CreateReplace
+  upgrade:
+    cleanupOnFail: true
+    remediation:
+      retries: 3
+    crds: CreateReplace
+  valuesFrom:
+  - kind: ConfigMap
+    name: kube-prometheus-stack-values
+  chartRef:
+    kind: OCIRepository
+    name: kube-prometheus-stack

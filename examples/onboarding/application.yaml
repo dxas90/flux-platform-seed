@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: team-example-web
+  namespace: argocd
+spec:
+  project: team-example
+  source:
+    repoURL: https://github.com/YOUR_ORG/example-app.git
+    targetRevision: main
+    path: deploy/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-example
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+    - FailOnSharedResource=true

@@ -1,0 +1,9 @@
+provider:
+  name: aws
+policy: upsert-only
+registry: txt
+txtOwnerId: REPLACE_WITH_UNIQUE_CLUSTER_ID
+domainFilters:
+- invalid.example
+sources:
+- ingress

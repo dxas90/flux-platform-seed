@@ -1,0 +1,15 @@
+apiVersion: source.extensions.fluxcd.io/v1beta1
+kind: ArtifactGenerator
+metadata:
+  name: platform-slices
+  namespace: flux-system
+spec:
+  sources:
+  - alias: fleet
+    kind: GitRepository
+    name: flux-system
+  artifacts:
+  - name: platform-infrastructure
+    copy:
+    - from: '@fleet/infrastructure/**'
+      to: '@artifact/infrastructure/'

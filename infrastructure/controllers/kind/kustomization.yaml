@@ -1,0 +1,57 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base
+configMapGenerator:
+  - name: cert-manager-overrides
+    namespace: cert-manager
+    files:
+      - values.yaml=values/cert-manager.yaml
+  - name: external-secrets-overrides
+    namespace: external-secrets
+    files:
+      - values.yaml=values/external-secrets.yaml
+  - name: metrics-server-overrides
+    namespace: kube-system
+    files:
+      - values.yaml=values/metrics-server.yaml
+  - name: reloader-overrides
+    namespace: kube-system
+    files:
+      - values.yaml=values/reloader.yaml
+  - name: keda-overrides
+    namespace: keda
+    files:
+      - values.yaml=values/keda.yaml
+  - name: kube-prometheus-stack-overrides
+    namespace: observability
+    files:
+      - values.yaml=values/kube-prometheus-stack.yaml
+  - name: grafana-operator-overrides
+    namespace: observability
+    files:
+      - values.yaml=values/grafana-operator.yaml
+  - name: loki-overrides
+    namespace: observability
+    files:
+      - values.yaml=values/loki.yaml
+  - name: fluent-bit-overrides
+    namespace: observability
+    files:
+      - values.yaml=values/fluent-bit.yaml
+  - name: alloy-overrides
+    namespace: observability
+    files:
+      - values.yaml=values/alloy.yaml
+  - name: tempo-overrides
+    namespace: observability
+    files:
+      - values.yaml=values/tempo.yaml
+  - name: argocd-overrides
+    namespace: argocd
+    files:
+      - values.yaml=values/argocd.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    reconcile.fluxcd.io/watch: Enabled

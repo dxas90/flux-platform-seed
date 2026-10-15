@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: platform-release
+  namespace: flux-system
+spec:
+  interval: 10m
+  url: oci://ghcr.io/REPLACE_ME/platform-manifests
+  ref:
+    tag: staging

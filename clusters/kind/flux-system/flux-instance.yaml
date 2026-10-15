@@ -1,0 +1,40 @@
+apiVersion: fluxcd.controlplane.io/v1
+kind: FluxInstance
+metadata:
+  name: flux
+  namespace: flux-system
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: 1h
+    fluxcd.controlplane.io/reconcileTimeout: 10m
+    kustomize.toolkit.fluxcd.io/prune: disabled
+spec:
+  distribution:
+    version: 2.8.3
+    registry: ghcr.io/fluxcd
+  components:
+    - source-controller
+    - source-watcher
+    - kustomize-controller
+    - helm-controller
+    - notification-controller
+  cluster:
+    type: kubernetes
+    networkPolicy: false
+    domain: cluster.local
+    multitenant: false
+  sync:
+    kind: GitRepository
+    url: https://github.com/dxas90/flux-platform-seed.git
+    ref: refs/heads/main
+    path: clusters/kind
+  kustomize:
+    patches:
+      - target:
+          group: kustomize.toolkit.fluxcd.io
+          version: v1
+          kind: Kustomization
+          name: flux-system
+        patch: |
+          - op: add
+            path: /spec/deletionPolicy
+            value: Orphan
