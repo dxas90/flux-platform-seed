@@ -11,65 +11,37 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+        with:
+          python-version: '3.13'
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - run: uv run --with pre-commit pre-commit run --all-files
+
   validate:
-    name: Validate manifests
+    name: validate
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: '3.13'
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4b91a5d039d4a9d5a1  # v6
-
-      - name: Install tools (kustomize, helm, flux)
-        uses: fluxcd/flux2/action@8d5f40dca36a949a36c9a439c2f52f33a1e5f0cb  # v2.9.6
-        with:
-          version: 2.9.6
-
-      - name: Install kustomize
-        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f  # v2
-        with:
-          kustomize-version: '5.8.2'
-
-      - name: Run YAML + Kustomize validation
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+      - uses: fluxcd/flux2/action@b9c17924adb533d3617ec7de97a7b0f4acc07b39  # v2.9.6
+      - uses: imranismail/setup-kustomize@53f941b41dca13ed61874bbc6b4b6e1562877530  # v3.0.0
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310  # v5.0.1
+      - name: Validate YAML, graph and Flux contracts
         run: uv run --with pyyaml==6.0.3 python scripts/validate.py
-
-      - name: Run unit tests
-        run: uv run --with pyyaml==6.0.3 python scripts/test_validate.py
-
-      - name: Check text file hygiene
-        run: uv run python scripts/check_text_files.py
-
-  helm:
-    name: Render Helm charts
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4
-
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
-        with:
-          python-version: '3.13'
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@6b9c6063abd6010835644d4b91a5d039d4a9d5a1  # v6
-
-      - name: Install tools (kustomize, helm)
-        uses: fluxcd/flux2/action@8d5f40dca36a949a36c9a439c2f52f33a1e5f0cb  # v2.9.6
-        with:
-          version: 2.9.6
-
-      - name: Install kustomize
-        uses: imranismail/setup-kustomize@2ba527d4d055ab63514ba50a99456fc35684947f  # v2
-        with:
-          kustomize-version: '5.8.2'
-
-      - name: Pull and render every pinned chart
+      - name: Unit tests
+        run: uv run --with pyyaml==6.0.3 python -m pytest scripts/test_validate.py -v
+      - name: Validate with Helm renders
         run: uv run --with pyyaml==6.0.3 python scripts/validate.py --helm

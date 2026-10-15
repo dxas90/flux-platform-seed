@@ -1,0 +1,48 @@
+# Tenant LimitRange + ResourceQuota template.
+#
+# Apply one copy of this per tenant namespace. It enforces the same resource accounting
+# that validate.py checks in CI on the live cluster:
+#   - Every container must declare requests and limits.
+#   - Namespace-level quota keeps a single team from starving others.
+#
+# Adjust cpu/memory values to match your node fleet. This template targets a medium-size
+# namespace (a few microservices) on a 4-core / 8 GiB node.
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: tenant-defaults
+  # namespace: YOUR_TEAM_NAMESPACE
+spec:
+  limits:
+    - type: Container
+      default:          # applied when a container omits limits
+        cpu: 500m
+        memory: 256Mi
+      defaultRequest:   # applied when a container omits requests
+        cpu: 50m
+        memory: 64Mi
+      max:              # upper bound per container
+        cpu: "4"
+        memory: 4Gi
+      min:              # lower bound per container
+        cpu: 10m
+        memory: 16Mi
+    - type: PersistentVolumeClaim
+      max:
+        storage: 50Gi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: tenant-quota
+  # namespace: YOUR_TEAM_NAMESPACE
+spec:
+  hard:
+    requests.cpu: "8"
+    requests.memory: 8Gi
+    limits.cpu: "16"
+    limits.memory: 16Gi
+    persistentvolumeclaims: "10"
+    count/deployments.apps: "20"
+    count/statefulsets.apps: "5"

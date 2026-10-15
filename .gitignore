@@ -15,10 +15,10 @@ age.agekey
 secrets.local/
 .cache/
 .venv/
-__pycache__/
-*.pyc
 .DS_Store
 !scripts/
 !scripts/**
-__pycache__/
+
+# Must follow the !scripts/** re-include above.
+**/__pycache__/
 *.pyc

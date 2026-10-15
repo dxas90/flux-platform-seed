@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cert-manager.io/clusterissuer_v1.json
+# Self-signed ClusterIssuer: works everywhere with no external dependency (kind, CI, internal certs).
+#
+# For public certificates add an ACME issuer next to this file, for example:
+#
+#   apiVersion: cert-manager.io/v1
+#   kind: ClusterIssuer
+#   metadata:
+#     name: letsencrypt-prod
+#   spec:
+#     acme:
+#       server: https://acme-v02.api.letsencrypt.org/directory
+#       email: platform@example.com
+#       privateKeySecretRef:
+#         name: letsencrypt-prod
+#       solvers:
+#         - dns01:
+#             cloudflare:
+#               apiTokenSecretRef:
+#                 name: cloudflare-api-token
+#                 key: api-token
+#
+# Use https://acme-staging-v02.api.letsencrypt.org/directory first to avoid rate limits.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: selfsigned
+spec:
+  selfSigned: {}
