@@ -21,9 +21,11 @@ description = "Validate custom resources against Flux and operator CRDs"
 run = "python scripts/validate_schemas.py --operator-version 0.61.0"
 
 [tasks."kind/up"]
+alias = ["up"]
 description = "Create kind, install Flux Operator, and apply the kind FluxInstance"
 run = "bash scripts/kind-up.sh"
 
 [tasks."kind/down"]
+alias = ["down"]
 description = "Delete the local kind cluster"
 run = "bash scripts/kind-down.sh"
