@@ -3,52 +3,64 @@ kind: Kustomization
 resources:
   - ../base
 configMapGenerator:
-  - name: cert-manager-overrides
+  - name: cert-manager-values
     namespace: cert-manager
+    behavior: replace
     files:
       - values.yaml=values/cert-manager.yaml
-  - name: external-secrets-overrides
+  - name: external-secrets-values
     namespace: external-secrets
+    behavior: replace
     files:
       - values.yaml=values/external-secrets.yaml
-  - name: metrics-server-overrides
+  - name: metrics-server-values
     namespace: kube-system
+    behavior: replace
     files:
       - values.yaml=values/metrics-server.yaml
-  - name: reloader-overrides
+  - name: reloader-values
     namespace: kube-system
+    behavior: replace
     files:
       - values.yaml=values/reloader.yaml
-  - name: keda-overrides
+  - name: keda-values
     namespace: keda
+    behavior: replace
     files:
       - values.yaml=values/keda.yaml
-  - name: kube-prometheus-stack-overrides
+  - name: kube-prometheus-stack-values
     namespace: observability
+    behavior: replace
     files:
       - values.yaml=values/kube-prometheus-stack.yaml
-  - name: grafana-operator-overrides
+  - name: grafana-operator-values
     namespace: observability
+    behavior: replace
     files:
       - values.yaml=values/grafana-operator.yaml
-  - name: loki-overrides
+  - name: loki-values
     namespace: observability
+    behavior: replace
     files:
       - values.yaml=values/loki.yaml
-  - name: fluent-bit-overrides
+  - name: fluent-bit-values
     namespace: observability
+    behavior: replace
     files:
       - values.yaml=values/fluent-bit.yaml
-  - name: alloy-overrides
+  - name: alloy-values
     namespace: observability
+    behavior: replace
     files:
       - values.yaml=values/alloy.yaml
-  - name: tempo-overrides
+  - name: tempo-values
     namespace: observability
+    behavior: replace
     files:
       - values.yaml=values/tempo.yaml
-  - name: argocd-overrides
+  - name: argocd-values
     namespace: argocd
+    behavior: replace
     files:
       - values.yaml=values/argocd.yaml
 generatorOptions:
