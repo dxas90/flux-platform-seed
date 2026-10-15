@@ -161,7 +161,7 @@ The defaults are suitable for local evaluation, not production capacity planning
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt
-.venv/bin/python scripts/test_validate.py
+.venv/bin/python -m unittest discover -s scripts -v
 .venv/bin/python scripts/validate.py
 .venv/bin/python scripts/validate.py --helm
 .venv/bin/python scripts/validate_schemas.py --operator-version 0.61.0
