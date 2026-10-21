@@ -1,0 +1,26 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: dragonfly-operator
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: generic-apps
+    namespace: flux-system
+  path: ./apps/dragonfly-operator
+  targetNamespace: dragonfly-system
+  prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: dragonfly-operator
+      patch: |
+        - op: add
+          path: /spec/valuesFrom/-
+          value:
+            kind: ConfigMap
+            name: dragonfly-operator-overrides

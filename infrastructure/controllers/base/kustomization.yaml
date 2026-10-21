@@ -4,21 +4,23 @@ resources:
   - https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.3/standard-install.yaml
   - https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.94.1/stripped-down-crds.yaml
   - namespaces
-  - cert-manager
-  - external-secrets
-  - metrics-server
-  - reloader
-  - keda
-  - kube-prometheus-stack
-  - grafana-operator
-  - loki
-  - fluent-bit
-  - alloy
-  - tempo
-  - argocd
+  - generic-apps-source.yaml
+  - alloy-config
+  - cert-manager.yaml
+  - external-secrets.yaml
+  - metrics-server.yaml
+  - reloader.yaml
+  - keda.yaml
+  - kube-prometheus-stack.yaml
+  - grafana-operator.yaml
+  - loki.yaml
+  - fluent-bit.yaml
+  - alloy.yaml
+  - tempo.yaml
+  - argocd.yaml
   # Uncomment to enable a catalog addon in both environments.
-  # - external-dns
-  # - kyverno
-  # - node-feature-discovery
-  # - cloudnative-pg
-  # - dragonfly-operator
+  # - external-dns.yaml
+  # - kyverno.yaml
+  # - node-feature-discovery.yaml
+  # - cloudnative-pg.yaml
+  # - dragonfly-operator.yaml

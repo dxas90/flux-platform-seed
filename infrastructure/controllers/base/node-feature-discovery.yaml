@@ -1,0 +1,26 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: node-feature-discovery
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: generic-apps
+    namespace: flux-system
+  path: ./apps/node-feature-discovery
+  targetNamespace: node-feature-discovery
+  prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: node-feature-discovery
+      patch: |
+        - op: add
+          path: /spec/valuesFrom/-
+          value:
+            kind: ConfigMap
+            name: node-feature-discovery-overrides

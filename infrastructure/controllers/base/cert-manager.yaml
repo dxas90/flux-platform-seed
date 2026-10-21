@@ -1,0 +1,58 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cert-manager
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: generic-apps
+    namespace: flux-system
+  path: ./apps/cert-manager
+  targetNamespace: cert-manager
+  prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: cert-manager
+      patch: |
+        - op: add
+          path: /spec/valuesFrom/-
+          value:
+            kind: ConfigMap
+            name: cert-manager-overrides
+    - target:
+        kind: HelmRelease
+        name: cert-manager
+      patch: |
+        apiVersion: helm.toolkit.fluxcd.io/v2
+        kind: HelmRelease
+        metadata:
+          name: cert-manager
+        spec:
+          postRenderers:
+            - kustomize:
+                patches:
+                  - target:
+                      group: networking.k8s.io
+                      kind: NetworkPolicy
+                    patch: |
+                      $patch: delete
+                      apiVersion: networking.k8s.io/v1
+                      kind: NetworkPolicy
+                      metadata:
+                        name: not-used
+                  - target:
+                      group: apps
+                      kind: Deployment
+                      name: cert-manager
+                    patch: |
+                      - op: add
+                        path: /spec/template/spec/containers/0/args/-
+                        value: --dns01-recursive-nameservers=https://1.1.1.1:443/dns-query,https://1.0.0.1:443/dns-query
+                      - op: add
+                        path: /spec/template/spec/containers/0/args/-
+                        value: --dns01-recursive-nameservers-only=true

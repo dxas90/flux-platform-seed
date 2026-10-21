@@ -1,0 +1,26 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cloudnative-pg
+  namespace: flux-system
+spec:
+  interval: 30m
+  retryInterval: 1m
+  timeout: 10m
+  sourceRef:
+    kind: GitRepository
+    name: generic-apps
+    namespace: flux-system
+  path: ./apps/cloudnative-pg
+  targetNamespace: cnpg-system
+  prune: true
+  patches:
+    - target:
+        kind: HelmRelease
+        name: cloudnative-pg
+      patch: |
+        - op: add
+          path: /spec/valuesFrom/-
+          value:
+            kind: ConfigMap
+            name: cloudnative-pg-overrides

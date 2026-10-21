@@ -1,6 +1,0 @@
-tempo:
-  retention: 24h
-  reportingEnabled: false
-persistence:
-  enabled: true
-  size: 10Gi

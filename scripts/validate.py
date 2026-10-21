@@ -77,6 +77,30 @@ def check_build(objects, path):
             version = sources[0]['spec']['ref']['tag'] if 'chartRef' in spec else spec['chart']['spec']['version']
             assert re.fullmatch(r'v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?', version), f'unpinned chart: {path}'
             assert spec['install']['remediation']['retries'] in range(1, 6)
+        if kind == 'Kustomization' and obj['apiVersion'].startswith('kustomize.toolkit.fluxcd.io/'):
+            # Only validate ConfigMap refs when overlay-generated overrides are present.
+            # The base build omits override ConfigMaps intentionally; env overlays supply them.
+            has_overrides = any(x['kind'] == 'ConfigMap' and x['metadata']['name'].endswith('-overrides') for x in objects)
+            if not has_overrides:
+                continue
+            target_ns = spec.get('targetNamespace') or obj['metadata'].get('namespace', '')
+            for patch_entry in spec.get('patches', []):
+                patch_str = patch_entry.get('patch', '')
+                if not patch_str:
+                    continue
+                try:
+                    patch_doc = next(iter(documents(patch_str)), None)
+                except Exception:
+                    continue
+                patch_items = patch_doc if isinstance(patch_doc, list) else [patch_doc]
+                for item in patch_items:
+                    if not isinstance(item, dict):
+                        continue
+                    value = item.get('value', {})
+                    if isinstance(value, dict) and value.get('kind') == 'ConfigMap':
+                        ref_name = value['name']
+                        found = [x for x in objects if x['kind'] == 'ConfigMap' and x['metadata']['name'] == ref_name and x['metadata'].get('namespace') == target_ns]
+                        assert len(found) == 1, f'missing values ConfigMap: {path}: {ref_name}'
 
 
 def check_cluster(objects, path):
@@ -215,14 +239,16 @@ def check_registrations(objects, projects):
 def build_catalog():
     """Exercise every catalog toggle through the actual environment overlays."""
     import shutil
+    SKIP = {'kustomization.yaml', 'generic-apps-source.yaml'}
     parent = Path(os.environ.get('TMPDIR', str(ROOT / '.cache')))
     parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix='infra-catalog-', dir=parent) as tmp:
         controllers = Path(tmp) / 'controllers'
         shutil.copytree(ROOT / 'infrastructure/controllers', controllers)
         base = controllers / 'base'
+        addon_files = sorted(p.name for p in base.iterdir() if p.suffix == '.yaml' and p.name not in SKIP)
         index = documents((base / 'kustomization.yaml').read_text())[0]
-        index['resources'] = ['namespaces'] + sorted(p.name for p in base.iterdir() if (p / 'helmrelease.yaml').exists())
+        index['resources'] = ['namespaces', 'generic-apps-source.yaml'] + addon_files
         (base / 'kustomization.yaml').write_text(yaml.safe_dump(index, sort_keys=False))
         result = {}
         for cluster in ('staging', 'prod'):

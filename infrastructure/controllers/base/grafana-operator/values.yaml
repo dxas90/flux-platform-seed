@@ -1,4 +1,0 @@
-serviceMonitor:
-  enabled: false
-dashboard:
-  enabled: false
