@@ -27,7 +27,7 @@ spec:
     multitenant: false
   sync:
     kind: GitRepository
-    url: https://github.com/YOUR_ORG/flux-platform-seed.git
+    url: https://github.com/dxas90/flux-platform-seed.git
     ref: refs/heads/main
     path: clusters/staging
   kustomize:
