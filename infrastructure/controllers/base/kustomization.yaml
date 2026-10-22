@@ -5,7 +5,6 @@ resources:
   - https://github.com/prometheus-operator/prometheus-operator/releases/download/v0.94.1/stripped-down-crds.yaml
   - namespaces
   - generic-apps-source.yaml
-  - alloy-config
   - cert-manager.yaml
   - external-secrets.yaml
   - metrics-server.yaml

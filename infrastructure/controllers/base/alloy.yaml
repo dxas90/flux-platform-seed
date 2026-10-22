@@ -26,3 +26,47 @@ spec:
           value:
             kind: ConfigMap
             name: alloy-overrides
+    - target:
+        kind: ConfigMap
+        name: alloy-config
+      patch: |
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: alloy-config
+        data:
+          config.alloy: |
+            // Collect only explicitly opted-in pods; Fluent Bit collects the rest.
+            logging { level = "info" }
+            discovery.kubernetes "pods" { role = "pod" }
+            discovery.relabel "pod_logs" {
+              targets = discovery.kubernetes.pods.targets
+              rule {
+                source_labels = ["__meta_kubernetes_pod_label_logs_platform_example_collector"]
+                regex = "alloy"
+                action = "keep"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_namespace"]
+                target_label = "namespace"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_name"]
+                target_label = "pod"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_container_name"]
+                target_label = "container"
+              }
+              rule {
+                source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+                target_label = "app"
+              }
+            }
+            loki.source.kubernetes "pod_logs" {
+              targets = discovery.relabel.pod_logs.output
+              forward_to = [loki.write.default.receiver]
+            }
+            loki.write "default" {
+              endpoint { url = "http://loki-gateway.observability.svc.cluster.local/loki/api/v1/push" }
+            }
