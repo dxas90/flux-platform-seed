@@ -2,6 +2,15 @@
 # Merged via valuesFrom → argocd-overrides ConfigMap (injected by the
 # infra-controllers Flux Kustomization patch on the HelmRelease).
 configs:
+  cm:
+    # Switch from 'annotation' (generic-apps default) to 'label' tracking.
+    # With 'annotation' mode ArgoCD only tracks resources it directly applies —
+    # Pods are created by the Deployment controller and never carry the tracking
+    # annotation, so the ArgoCD UI shows Deployments but no child Pods.
+    # With 'label' mode ArgoCD injects app.kubernetes.io/instance into every
+    # managed resource's labels; the label propagates through Deployment
+    # spec.template.metadata.labels to Pods, making them visible in the UI.
+    application.resourceTrackingMethod: label
   params:
     # Enable the ApplicationSet SCM/PR provider generators.
     # Required since ArgoCD 2.5 — disabled by default as a security gate.
