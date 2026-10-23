@@ -1,0 +1,42 @@
+matches snapshot:
+  1: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: AppProject
+    metadata:
+      name: learn-go
+      namespace: argocd
+    spec:
+      clusterResourceWhitelist:
+        - group: ""
+          kind: Namespace
+      description: learn-go — https://github.com/dxas90/learn-go.git
+      destinations:
+        - namespace: learn-go
+          server: https://kubernetes.default.svc
+        - namespace: learn-go-preview
+          server: https://kubernetes.default.svc
+      namespaceResourceWhitelist:
+        - group: ""
+          kind: ConfigMap
+        - group: ""
+          kind: Secret
+        - group: ""
+          kind: Service
+        - group: ""
+          kind: ServiceAccount
+        - group: ""
+          kind: PersistentVolumeClaim
+        - group: apps
+          kind: Deployment
+        - group: autoscaling
+          kind: HorizontalPodAutoscaler
+        - group: policy
+          kind: PodDisruptionBudget
+        - group: networking.k8s.io
+          kind: Ingress
+        - group: networking.k8s.io
+          kind: NetworkPolicy
+        - group: networking.x-k8s.io
+          kind: HTTPRoute
+      sourceRepos:
+        - https://github.com/dxas90/learn-go.git

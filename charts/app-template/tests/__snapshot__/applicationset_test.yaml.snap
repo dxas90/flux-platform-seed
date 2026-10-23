@@ -1,0 +1,146 @@
+matches snapshot for GitHub preview:
+  1: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: ApplicationSet
+    metadata:
+      name: learn-go-preview
+      namespace: argocd
+    spec:
+      generators:
+        - pullRequest:
+            github:
+              labels:
+                - preview
+              owner: dxas90
+              repo: learn-go
+              tokenRef:
+                key: token
+                secretName: github-token
+            requeueAfterSeconds: 600
+      goTemplate: true
+      goTemplateOptions:
+        - missingkey=error
+      template:
+        metadata:
+          name: learn-go-preview-{{.number}}-{{.branch_slug}}
+        spec:
+          destination:
+            namespace: learn-go-preview
+            server: https://kubernetes.default.svc
+          project: learn-go
+          source:
+            helm:
+              parameters:
+                - name: image.repository
+                  value: ghcr.io/dxas90/learn-go
+                - name: image.tag
+                  value: '{{.head_sha}}'
+              releaseName: learn-go-preview-{{.number}}
+            path: k8s/chart
+            repoURL: https://github.com/dxas90/learn-go.git
+            targetRevision: '{{.head_sha}}'
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+            syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - FailOnSharedResource=true
+matches snapshot for GitLab preview:
+  1: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: ApplicationSet
+    metadata:
+      name: network-stats-preview
+      namespace: argocd
+    spec:
+      generators:
+        - pullRequest:
+            gitlab:
+              labels:
+                - preview
+              project: "30270366"
+              tokenRef:
+                key: token
+                secretName: gitlab-token
+            requeueAfterSeconds: 600
+      goTemplate: true
+      goTemplateOptions:
+        - missingkey=error
+      template:
+        metadata:
+          name: network-stats-preview-{{.number}}-{{.branch_slug}}
+        spec:
+          destination:
+            namespace: network-stats-preview
+            server: https://kubernetes.default.svc
+          project: network-stats
+          source:
+            helm:
+              parameters:
+                - name: image.repository
+                  value: registry.gitlab.com/dxas90/network-stats
+                - name: image.tag
+                  value: '{{.head_sha}}'
+              releaseName: network-stats-preview-{{.number}}
+            path: k8s/network-stats
+            repoURL: https://gitlab.com/dxas90/network-stats.git
+            targetRevision: '{{.head_sha}}'
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+            syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - FailOnSharedResource=true
+matches snapshot for self-hosted GitLab preview:
+  1: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: ApplicationSet
+    metadata:
+      name: my-svc-preview
+      namespace: argocd
+    spec:
+      generators:
+        - pullRequest:
+            gitlab:
+              gitlabUrl: https://gitlab.example.com
+              labels:
+                - preview
+              project: "42"
+              tokenRef:
+                key: token
+                secretName: gitlab-token
+            requeueAfterSeconds: 600
+      goTemplate: true
+      goTemplateOptions:
+        - missingkey=error
+      template:
+        metadata:
+          name: my-svc-preview-{{.number}}-{{.branch_slug}}
+        spec:
+          destination:
+            namespace: my-svc-preview
+            server: https://kubernetes.default.svc
+          project: my-svc
+          source:
+            helm:
+              parameters:
+                - name: image.repository
+                  value: registry.example.com/team/my-svc
+                - name: image.tag
+                  value: '{{.head_sha}}'
+              releaseName: my-svc-preview-{{.number}}
+            path: k8s/chart
+            repoURL: https://gitlab.example.com/team/my-svc.git
+            targetRevision: '{{.head_sha}}'
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+            syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - FailOnSharedResource=true

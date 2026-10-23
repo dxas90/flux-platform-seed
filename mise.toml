@@ -12,6 +12,10 @@ uv = "0.13.2"
 description = "Run text hygiene, manifest, dependency, and unit checks"
 run = "python scripts/check_text_files.py && python -m unittest discover -s scripts -v && python scripts/validate.py"
 
+[tasks."validate/helm-unit"]
+description = "Run Helm unit tests for the app-template chart"
+run = "helm unittest charts/app-template"
+
 [tasks."validate/helm"]
 description = "Download and render every pinned Helm chart"
 run = "python scripts/validate.py --helm"

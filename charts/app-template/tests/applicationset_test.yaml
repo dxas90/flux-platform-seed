@@ -1,0 +1,317 @@
+suite: ApplicationSet generation (preview environments)
+templates:
+  - templates/applicationset.yaml
+
+tests:
+  - it: generates no ApplicationSet when preview block is absent
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: generates no ApplicationSet when preview.enabled is false
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            enabled: false
+            github: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: generates one ApplicationSet when preview.github is set
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ApplicationSet
+
+  - it: generates one ApplicationSet per previewed app
+    set:
+      apps:
+        - name: app-a
+          repo: https://github.com/org/app-a.git
+          chart: k8s/chart
+          registry: ghcr.io/org/app-a
+          preview:
+            github: {}
+        - name: app-b
+          repo: https://github.com/org/app-b.git
+          chart: k8s/chart
+          registry: ghcr.io/org/app-b
+        - name: app-c
+          repo: https://github.com/org/app-c.git
+          chart: k8s/chart
+          registry: ghcr.io/org/app-c
+          preview:
+            github: {}
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: names the ApplicationSet "<app>-preview"
+    set:
+      apps:
+        - name: learn-go
+          repo: https://github.com/dxas90/learn-go.git
+          chart: k8s/chart
+          registry: ghcr.io/dxas90/learn-go
+          preview:
+            github: {}
+    asserts:
+      - equal:
+          path: metadata.name
+          value: learn-go-preview
+
+  - it: uses GitHub generator with owner and repo extracted from URL
+    set:
+      apps:
+        - name: learn-go
+          repo: https://github.com/dxas90/learn-go.git
+          chart: k8s/chart
+          registry: ghcr.io/dxas90/learn-go
+          preview:
+            github: {}
+    asserts:
+      - equal:
+          path: spec.generators[0].pullRequest.github.owner
+          value: dxas90
+      - equal:
+          path: spec.generators[0].pullRequest.github.repo
+          value: learn-go
+
+  - it: uses the github-token secret for GitHub
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - equal:
+          path: spec.generators[0].pullRequest.github.tokenRef.secretName
+          value: github-token
+      - equal:
+          path: spec.generators[0].pullRequest.github.tokenRef.key
+          value: token
+
+  - it: uses GitLab generator when preview.gitlab is set
+    set:
+      apps:
+        - name: network-stats
+          repo: https://gitlab.com/dxas90/network-stats.git
+          chart: k8s/network-stats
+          registry: registry.gitlab.com/dxas90/network-stats
+          preview:
+            gitlab:
+              projectId: "30270366"
+    asserts:
+      - isNotNull:
+          path: spec.generators[0].pullRequest.gitlab
+      - isNull:
+          path: spec.generators[0].pullRequest.github
+
+  - it: sets projectId for GitLab generator
+    set:
+      apps:
+        - name: network-stats
+          repo: https://gitlab.com/dxas90/network-stats.git
+          chart: k8s/network-stats
+          registry: registry.gitlab.com/dxas90/network-stats
+          preview:
+            gitlab:
+              projectId: "30270366"
+    asserts:
+      - equal:
+          path: spec.generators[0].pullRequest.gitlab.project
+          value: "30270366"
+
+  - it: uses the gitlab-token secret for GitLab
+    set:
+      apps:
+        - name: network-stats
+          repo: https://gitlab.com/dxas90/network-stats.git
+          chart: k8s/network-stats
+          registry: registry.gitlab.com/dxas90/network-stats
+          preview:
+            gitlab:
+              projectId: "30270366"
+    asserts:
+      - equal:
+          path: spec.generators[0].pullRequest.gitlab.tokenRef.secretName
+          value: gitlab-token
+
+  - it: sets gitlabUrl for self-hosted GitLab
+    set:
+      apps:
+        - name: my-svc
+          repo: https://gitlab.example.com/team/my-svc.git
+          chart: k8s/chart
+          registry: registry.example.com/team/my-svc
+          preview:
+            gitlab:
+              url: https://gitlab.example.com
+              projectId: "42"
+    asserts:
+      - equal:
+          path: spec.generators[0].pullRequest.gitlab.gitlabUrl
+          value: https://gitlab.example.com
+
+  - it: omits gitlabUrl for gitlab.com (no url field)
+    set:
+      apps:
+        - name: network-stats
+          repo: https://gitlab.com/dxas90/network-stats.git
+          chart: k8s/network-stats
+          registry: registry.gitlab.com/dxas90/network-stats
+          preview:
+            gitlab:
+              projectId: "30270366"
+    asserts:
+      - isNull:
+          path: spec.generators[0].pullRequest.gitlab.gitlabUrl
+
+  - it: uses goTemplate mode
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - equal:
+          path: spec.goTemplate
+          value: true
+
+  - it: preview Application name contains ArgoCD template variables (not Helm-rendered)
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.name
+          pattern: "my-app-preview-\\{\\{.number\\}\\}-\\{\\{.branch_slug\\}\\}"
+
+  - it: preview Application targetRevision is the ArgoCD head_sha variable
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.source.targetRevision
+          pattern: "\\{\\{.head_sha\\}\\}"
+
+  - it: preview image tag is the ArgoCD head_sha variable
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - contains:
+          path: spec.template.spec.source.helm.parameters
+          content:
+            name: image.tag
+            value: "{{.head_sha}}"
+
+  - it: deploys preview to the preview namespace
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - equal:
+          path: spec.template.spec.destination.namespace
+          value: my-app-preview
+
+  - it: respects custom preview namespace in the template destination
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            namespace: my-app-pr
+            github: {}
+    asserts:
+      - equal:
+          path: spec.template.spec.destination.namespace
+          value: my-app-pr
+
+  - it: matches snapshot for GitHub preview
+    set:
+      apps:
+        - name: learn-go
+          repo: https://github.com/dxas90/learn-go.git
+          chart: k8s/chart
+          registry: ghcr.io/dxas90/learn-go
+          preview:
+            github: {}
+    asserts:
+      - matchSnapshot: {}
+
+  - it: matches snapshot for GitLab preview
+    set:
+      apps:
+        - name: network-stats
+          repo: https://gitlab.com/dxas90/network-stats.git
+          chart: k8s/network-stats
+          registry: registry.gitlab.com/dxas90/network-stats
+          preview:
+            gitlab:
+              projectId: "30270366"
+    asserts:
+      - matchSnapshot: {}
+
+  - it: matches snapshot for self-hosted GitLab preview
+    set:
+      apps:
+        - name: my-svc
+          repo: https://gitlab.example.com/team/my-svc.git
+          chart: k8s/chart
+          registry: registry.example.com/team/my-svc
+          preview:
+            gitlab:
+              url: https://gitlab.example.com
+              projectId: "42"
+    asserts:
+      - matchSnapshot: {}

@@ -1,0 +1,31 @@
+matches snapshot:
+  1: |
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: learn-go
+      namespace: argocd
+    spec:
+      destination:
+        namespace: learn-go
+        server: https://kubernetes.default.svc
+      project: learn-go
+      source:
+        helm:
+          parameters:
+            - name: image.repository
+              value: ghcr.io/dxas90/learn-go
+            - name: env.variables.APP_ENV
+              value: production
+          releaseName: learn-go
+        path: k8s/chart
+        repoURL: https://github.com/dxas90/learn-go.git
+        targetRevision: main
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - FailOnSharedResource=true

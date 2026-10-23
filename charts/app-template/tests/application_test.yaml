@@ -1,0 +1,187 @@
+suite: Application generation
+templates:
+  - templates/application.yaml
+
+tests:
+  - it: creates one Application per app
+    set:
+      apps:
+        - name: app-a
+          repo: https://github.com/org/app-a.git
+          chart: k8s/chart
+          registry: ghcr.io/org/app-a
+        - name: app-b
+          repo: https://github.com/org/app-b.git
+          chart: k8s/chart
+          registry: ghcr.io/org/app-b
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: sets correct metadata
+    set:
+      apps:
+        - name: learn-go
+          repo: https://github.com/dxas90/learn-go.git
+          chart: k8s/chart
+          registry: ghcr.io/dxas90/learn-go
+    asserts:
+      - isKind:
+          of: Application
+      - equal:
+          path: metadata.name
+          value: learn-go
+      - equal:
+          path: metadata.namespace
+          value: argocd
+
+  - it: deploys to the app namespace
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - equal:
+          path: spec.destination.namespace
+          value: my-app
+      - equal:
+          path: spec.destination.server
+          value: https://kubernetes.default.svc
+
+  - it: sets project to app name
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - equal:
+          path: spec.project
+          value: my-app
+
+  - it: uses default targetRevision when not overridden
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - equal:
+          path: spec.source.targetRevision
+          value: main
+
+  - it: respects targetRevision override
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          targetRevision: release/1.2
+    asserts:
+      - equal:
+          path: spec.source.targetRevision
+          value: release/1.2
+
+  - it: sets source repo and chart path
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/my-chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - equal:
+          path: spec.source.repoURL
+          value: https://github.com/org/my-app.git
+      - equal:
+          path: spec.source.path
+          value: k8s/my-chart
+
+  - it: passes image.repository helm parameter
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - contains:
+          path: spec.source.helm.parameters
+          content:
+            name: image.repository
+            value: ghcr.io/org/my-app
+
+  - it: passes extraHelmParameters
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          extraHelmParameters:
+            - name: env.variables.APP_ENV
+              value: production
+            - name: replicaCount
+              value: "2"
+    asserts:
+      - contains:
+          path: spec.source.helm.parameters
+          content:
+            name: env.variables.APP_ENV
+            value: production
+      - contains:
+          path: spec.source.helm.parameters
+          content:
+            name: replicaCount
+            value: "2"
+
+  - it: includes default syncOptions
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - contains:
+          path: spec.syncPolicy.syncOptions
+          content: CreateNamespace=true
+      - contains:
+          path: spec.syncPolicy.syncOptions
+          content: ServerSideApply=true
+      - contains:
+          path: spec.syncPolicy.syncOptions
+          content: FailOnSharedResource=true
+
+  - it: enables automated sync with prune and selfHeal
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - equal:
+          path: spec.syncPolicy.automated.prune
+          value: true
+      - equal:
+          path: spec.syncPolicy.automated.selfHeal
+          value: true
+
+  - it: matches snapshot
+    set:
+      apps:
+        - name: learn-go
+          repo: https://github.com/dxas90/learn-go.git
+          chart: k8s/chart
+          registry: ghcr.io/dxas90/learn-go
+          extraHelmParameters:
+            - name: env.variables.APP_ENV
+              value: production
+    asserts:
+      - matchSnapshot: {}

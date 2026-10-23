@@ -1,0 +1,153 @@
+suite: AppProject generation
+templates:
+  - templates/project.yaml
+
+tests:
+  - it: creates one AppProject per app
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+        - name: other-app
+          repo: https://github.com/org/other-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/other-app
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: sets correct metadata
+    set:
+      apps:
+        - name: learn-go
+          repo: https://github.com/dxas90/learn-go.git
+          chart: k8s/chart
+          registry: ghcr.io/dxas90/learn-go
+    asserts:
+      - isKind:
+          of: AppProject
+      - equal:
+          path: metadata.name
+          value: learn-go
+      - equal:
+          path: metadata.namespace
+          value: argocd
+
+  - it: scopes sourceRepos to the app repo only
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - equal:
+          path: spec.sourceRepos[0]
+          value: https://github.com/org/my-app.git
+      - lengthEqual:
+          path: spec.sourceRepos
+          count: 1
+
+  - it: has only the stable namespace destination when no preview block
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - lengthEqual:
+          path: spec.destinations
+          count: 1
+      - contains:
+          path: spec.destinations
+          content:
+            server: https://kubernetes.default.svc
+            namespace: my-app
+
+  - it: adds preview namespace destination when github preview is set
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - lengthEqual:
+          path: spec.destinations
+          count: 2
+      - contains:
+          path: spec.destinations
+          content:
+            server: https://kubernetes.default.svc
+            namespace: my-app-preview
+
+  - it: adds preview namespace destination when gitlab preview is set
+    set:
+      apps:
+        - name: my-svc
+          repo: https://gitlab.com/org/my-svc.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-svc
+          preview:
+            gitlab:
+              projectId: "12345"
+    asserts:
+      - lengthEqual:
+          path: spec.destinations
+          count: 2
+      - contains:
+          path: spec.destinations
+          content:
+            server: https://kubernetes.default.svc
+            namespace: my-svc-preview
+
+  - it: respects custom preview namespace override
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            namespace: my-app-pr
+            github: {}
+    asserts:
+      - contains:
+          path: spec.destinations
+          content:
+            server: https://kubernetes.default.svc
+            namespace: my-app-pr
+
+  - it: allows Namespace in cluster-scoped resources (required for CreateNamespace=true)
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+    asserts:
+      - contains:
+          path: spec.clusterResourceWhitelist
+          content:
+            group: ""
+            kind: Namespace
+      - lengthEqual:
+          path: spec.clusterResourceWhitelist
+          count: 1
+
+  - it: matches snapshot
+    set:
+      apps:
+        - name: learn-go
+          repo: https://github.com/dxas90/learn-go.git
+          chart: k8s/chart
+          registry: ghcr.io/dxas90/learn-go
+          preview:
+            github: {}
+    asserts:
+      - matchSnapshot: {}
