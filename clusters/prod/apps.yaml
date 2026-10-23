@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fluxcd-community/flux2-schemas/main/kustomization-kustomize-v1.json
-# Flux Kustomization — network-stats ArgoCD Application + preview ResourceSets (prod)
----
+# Flux Kustomization — network-stats ArgoCD resources (prod)
+# AppProject + Application (stable) + ApplicationSet (MR previews) + notifications config.
+# Single entry: everything lives in apps/network-stats/.
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -19,22 +20,3 @@ spec:
   serviceAccountName: kustomize-controller
   dependsOn:
     - name: infra-configs
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: app-network-stats-preview
-  namespace: flux-system
-spec:
-  interval: 10m
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./apps/network-stats-preview
-  prune: true
-  wait: false
-  serviceAccountName: kustomize-controller
-  dependsOn:
-    - name: app-network-stats

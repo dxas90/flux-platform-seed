@@ -1,0 +1,68 @@
+# Strategic-merge patch for argocd-notifications-cm.
+# This ConfigMap is owned by the ArgoCD Helm chart (installed via infra-controllers).
+# Kustomize merges these keys into the existing ConfigMap without touching
+# keys managed by ArgoCD's own Helm values.
+#
+# Flux applies this through the infra-configs Kustomization (which dependsOn
+# infra-controllers), so ArgoCD is guaranteed to exist before this patch lands.
+#
+# Secret prereqs (argocd namespace, created out-of-band):
+#
+#   # 1. For the ApplicationSet PR generator (already in apps/network-stats/):
+#   kubectl -n argocd create secret generic gitlab-token \
+#     --from-literal=token=<YOUR_GITLAB_PAT>
+#
+#   # 2. For argocd-notifications — key name MUST match $gitlab-token below:
+#   kubectl -n argocd create secret generic argocd-notifications-secret \
+#     --from-literal=gitlab-token=<YOUR_GITLAB_PAT>
+#
+#   Required PAT scopes: api (to post commit statuses)
+#
+# References:
+#   https://argo-cd.readthedocs.io/en/stable/operator-manual/notifications/services/gitlab/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  # GitLab notification service.
+  # $gitlab-token resolves to key "gitlab-token" in argocd-notifications-secret.
+  service.gitlab: |
+    token: $gitlab-token
+
+  # Trigger: fire on every sync operation phase change.
+  trigger.on-sync-status-changed: |
+    - when: app.status.operationState.phase in ['Running']
+      send: [gitlab-commit-status-running]
+    - when: app.status.operationState.phase in ['Succeeded']
+      send: [gitlab-commit-status-success]
+    - when: app.status.operationState.phase in ['Failed', 'Error']
+      send: [gitlab-commit-status-failed]
+
+  # Templates — map ArgoCD sync phases to GitLab commit status states.
+  # repoURLPath / revisionPath: the ApplicationSet sets targetRevision to
+  # {{.head_sha}} so this always posts to the correct MR commit.
+  template.gitlab-commit-status-running: |
+    gitlab:
+      repoURLPath: "{{.app.spec.source.repoURL}}"
+      revisionPath: "{{.app.spec.source.targetRevision}}"
+      state: running
+      label: "argocd/preview"
+      targetURL: "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
+
+  template.gitlab-commit-status-success: |
+    gitlab:
+      repoURLPath: "{{.app.spec.source.repoURL}}"
+      revisionPath: "{{.app.spec.source.targetRevision}}"
+      state: success
+      label: "argocd/preview"
+      targetURL: "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"
+
+  template.gitlab-commit-status-failed: |
+    gitlab:
+      repoURLPath: "{{.app.spec.source.repoURL}}"
+      revisionPath: "{{.app.spec.source.targetRevision}}"
+      state: failed
+      label: "argocd/preview"
+      targetURL: "{{.context.argocdUrl}}/applications/{{.app.metadata.name}}"

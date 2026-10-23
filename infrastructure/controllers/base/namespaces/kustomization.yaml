@@ -11,4 +11,3 @@ resources:
 - kyverno.yaml
 - node-feature-discovery.yaml
 - observability.yaml
-- network-stats-preview.yaml

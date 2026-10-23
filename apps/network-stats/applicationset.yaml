@@ -1,0 +1,107 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json
+# ArgoCD ApplicationSet — network-stats GitLab MR preview environments
+#
+# Creates one ephemeral ArgoCD Application per open GitLab MR that:
+#   - carries the label "preview" on the MR, OR
+#   - has a branch matching the branchMatch filter below.
+#
+# Available template variables (goTemplate):
+#   .number          MR IID (e.g. "42")
+#   .branch          source branch name
+#   .branch_slug     DNS-safe branch name, max 50 chars
+#   .head_sha        HEAD commit SHA
+#   .head_short_sha  first 8 chars of HEAD SHA
+#   .target_branch   target branch name
+#   .title           MR title
+#   .author          MR author username
+#   .labels          array of label strings
+#
+# Prerequisites — create the Secret in the argocd namespace:
+#   kubectl -n argocd create secret generic gitlab-token \
+#     --from-literal=token=<GITLAB_PAT>   # scopes: read_api, read_repository
+#
+# The GitLab project ID (numeric) is visible at:
+#   https://gitlab.com/dxas90/network-stats → Settings → General → Project ID
+# Replace GITLAB_PROJECT_ID below with that number.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: network-stats-preview
+  namespace: argocd
+spec:
+  # Use Go templates — safer and more expressive than the legacy {{ }} syntax.
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+
+  generators:
+    - pullRequest:
+        gitlab:
+          # REQUIRED: numeric project ID from gitlab.com/dxas90/network-stats → Settings → General
+          project: "30270366"
+          # Optional: self-hosted GitLab URL — omit for gitlab.com
+          # api: https://gitlab.example.com/
+          tokenRef:
+            secretName: gitlab-token
+            key: token
+          # Only pick up MRs labelled "preview"
+          labels:
+            - preview
+          # Only open MRs
+          pullRequestState: opened
+        # Poll every 10 min; webhook (see argocd-appset-webhook Ingress) will
+        # accelerate this to near-instant on MR open/update/close events.
+        requeueAfterSeconds: 600
+
+  # Sync policy applied to all generated Applications.
+  # prune: true means the Application (and its resources) are deleted when
+  # the MR is closed/merged/label-removed.
+  syncPolicy:
+    applicationsSync: sync
+
+  template:
+    metadata:
+      # Name is unique per MR: network-stats-preview-<number>-<branch_slug>
+      name: "network-stats-preview-{{.number}}-{{.branch_slug}}"
+      namespace: argocd
+      labels:
+        app.kubernetes.io/managed-by: argocd-applicationset
+        preview/mr-number: "{{.number}}"
+        preview/app: network-stats
+      annotations:
+        # Shown in the ArgoCD UI as the source MR link
+        argocd.argoproj.io/manifest-generate-paths: "k8s/network-stats"
+        # Subscribe every generated Application to the GitLab commit-status notification
+        notifications.argoproj.io/subscribe.on-sync-status-changed.gitlab: ""
+    spec:
+      project: network-stats
+      source:
+        repoURL: https://gitlab.com/dxas90/network-stats.git
+        # Pin to the exact HEAD SHA so ArgoCD tracks the MR branch tip
+        targetRevision: "{{.head_sha}}"
+        path: k8s/network-stats
+        helm:
+          releaseName: "network-stats-{{.number}}-{{.branch_slug}}"
+          parameters:
+            - name: image.repository
+              value: registry.gitlab.com/dxas90/network-stats
+            # Deploy the image built for this MR's HEAD commit
+            - name: image.tag
+              value: "{{.head_sha}}"
+            - name: image.pullPolicy
+              value: Always
+            - name: env.variables.APP_ENV
+              value: preview
+            # Disable httproute for preview — plain ClusterIP is enough
+            - name: httproute.enabled
+              value: "false"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: network-stats-preview
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - FailOnSharedResource=true

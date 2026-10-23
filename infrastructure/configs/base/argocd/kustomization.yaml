@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# notifications-patch.yaml is a ConfigMap resource applied via SSA.
+# Flux owns the service.gitlab / trigger.* / template.* keys we define here;
+# the ArgoCD Helm chart owns whatever keys it manages. SSA field managers
+# coexist — neither clobbers the other.
+resources:
+  - notifications-patch.yaml
