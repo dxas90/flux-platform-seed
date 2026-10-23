@@ -60,9 +60,9 @@ spec:
             - preview
           # Only open MRs
           pullRequestState: opened
-        # Poll every 10 min; webhook (see argocd-appset-webhook Ingress) will
+        # Poll every 2 min; webhook (see argocd-appset-webhook Ingress) will
         # accelerate this to near-instant on MR open/update/close events.
-        requeueAfterSeconds: 600
+        requeueAfterSeconds: 120
 
   # Sync policy applied to all generated Applications.
   # prune: true means the Application (and its resources) are deleted when
