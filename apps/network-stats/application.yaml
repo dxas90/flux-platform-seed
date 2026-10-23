@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/application_v1alpha1.json
+# ArgoCD Application — network-stats (stable / production)
+# Points at the in-repo Helm chart under k8s/network-stats.
+# The chart is sourced directly from the gitlab.com repo so ArgoCD
+# handles both image delivery and manifest rendering without an
+# additional FluxCD GitRepository resource.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: network-stats
+  namespace: argocd
+  annotations:
+    # ArgoCD will create the target namespace if it doesn't already exist.
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  project: network-stats
+  source:
+    repoURL: https://gitlab.com/dxas90/network-stats.git
+    targetRevision: main
+    path: k8s/network-stats
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: image.repository
+          value: registry.gitlab.com/dxas90/network-stats
+        - name: env.variables.APP_ENV
+          value: production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: network-stats
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - FailOnSharedResource=true
+      - ServerSideApply=true

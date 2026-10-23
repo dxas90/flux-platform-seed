@@ -1,0 +1,87 @@
+# GitLab CI jobs to add to network-stats/.gitlab-ci.yml
+# for GitLab Environments integration with Flux Operator.
+#
+# These jobs manage review/ environments so Flux Operator's
+# GitLabEnvironment ResourceSetInputProvider can pick them up.
+#
+# Prerequisites:
+#   - gitlab-agent installed on the cluster (added to generic-apps)
+#   - kubectl context available as: "path/to/agent:namespace:context-name"
+#     Set KUBE_CONTEXT CI variable to the agent context string
+#   - flux-operator CLI available in the CI image (or installed inline)
+#   - The network-stats-preview namespace and its resources deployed
+#
+# Usage: copy the stages and jobs below into network-stats/.gitlab-ci.yml
+
+# -------------------------------------------------------------------
+# Add to the existing stages list:
+#
+# stages:
+#   - test
+#   - containerize
+#   - review        # <-- add this
+#   - deployment
+#   - notify
+# -------------------------------------------------------------------
+
+# Create (and start) a review environment tied to this MR branch.
+# Triggered automatically on every push to a non-main branch when
+# the MR carries the deploy/flux-preview label.
+start-review:
+  stage: review
+  environment:
+    name: review/$CI_COMMIT_REF_SLUG
+    url: https://network-stats-$CI_ENVIRONMENT_SLUG.preview.example.com
+    action: start
+    on_stop: stop-review
+  # Replace with an image that has kubectl + flux-operator CLI.
+  # Example: image: ghcr.io/controlplaneio-fluxcd/flux-operator-cli:latest
+  image: bitnami/kubectl:latest
+  script:
+    # Activate the GitLab Agent Kubernetes context
+    - kubectl config use-context "$KUBE_CONTEXT"
+    # Immediately reconcile both the InputProvider and the ResourceSet
+    # so the environment is deployed within this pipeline run.
+    - |
+      flux-operator reconcile inputprovider \
+        --namespace network-stats-preview \
+        --timeout 2m \
+        network-stats-environments
+    - |
+      flux-operator reconcile resourceset \
+        --namespace network-stats-preview \
+        --timeout 5m \
+        network-stats-env
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: manual
+
+# Tear down the review environment.
+# Flux Operator will GC the HelmRelease and GitRepository once the
+# environment transitions to stopped.
+stop-review:
+  stage: review
+  environment:
+    name: review/$CI_COMMIT_REF_SLUG
+    action: stop
+  image: bitnami/kubectl:latest
+  when: manual
+  script:
+    - kubectl config use-context "$KUBE_CONTEXT"
+    - |
+      flux-operator reconcile inputprovider \
+        --namespace network-stats-preview \
+        --timeout 2m \
+        network-stats-environments
+    - |
+      flux-operator reconcile resourceset \
+        --namespace network-stats-preview \
+        --timeout 2m \
+        network-stats-env
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: manual

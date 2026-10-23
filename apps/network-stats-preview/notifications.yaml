@@ -1,0 +1,64 @@
+# Notification providers and alerts for network-stats-preview deployments.
+#
+# Two notification channels are wired up:
+#   1. gitlabmergerequestcomment — posts/updates a single comment on the MR
+#      page with the HelmRelease status (requires change_request annotation).
+#   2. gitlab (commit status) — sets a commit status check on the HEAD SHA
+#      (requires commit annotation).
+#
+# Both providers share the gitlab-token-readonly Secret used by the
+# ResourceSetInputProviders.  The token must have api scope to post
+# MR comments and commit statuses.
+#
+# Prerequisite: create the Secret before applying this manifest:
+#   kubectl -n network-stats-preview create secret generic gitlab-token-readonly \
+#     --from-literal=username=flux \
+#     --from-literal=password=<YOUR_GITLAB_PAT>
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: gitlab-mr-comment
+  namespace: network-stats-preview
+spec:
+  type: gitlabmergerequestcomment
+  address: https://gitlab.com/dxas90/network-stats
+  secretRef:
+    name: gitlab-token-readonly
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: gitlab-mr-comment
+  namespace: network-stats-preview
+spec:
+  providerRef:
+    name: gitlab-mr-comment
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: "*"
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Provider
+metadata:
+  name: gitlab-commit-status
+  namespace: network-stats-preview
+spec:
+  type: gitlab
+  address: https://gitlab.com/dxas90/network-stats
+  secretRef:
+    name: gitlab-token-readonly
+---
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: gitlab-commit-status
+  namespace: network-stats-preview
+spec:
+  providerRef:
+    name: gitlab-commit-status
+  eventSeverity: info
+  eventSources:
+    - kind: HelmRelease
+      name: "*"

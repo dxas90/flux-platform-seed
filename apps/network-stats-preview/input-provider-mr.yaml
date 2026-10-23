@@ -1,0 +1,26 @@
+# ResourceSetInputProvider — GitLab Merge Requests
+#
+# Watches https://gitlab.com/dxas90/network-stats for open MRs
+# carrying the `deploy/flux-preview` label. Each matching MR is
+# turned into an input row for the network-stats MR ResourceSet.
+#
+# Reconciliation is driven by the 10-minute poll below AND by the
+# GitLab webhook Receiver (see receiver-mr.yaml) when configured.
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSetInputProvider
+metadata:
+  name: network-stats-merge-requests
+  namespace: network-stats-preview
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "10m"
+spec:
+  type: GitLabMergeRequest
+  url: https://gitlab.com/dxas90/network-stats
+  secretRef:
+    name: gitlab-token-readonly
+  filter:
+    labels:
+      - "deploy/flux-preview"
+  defaultValues:
+    # Path inside the repo to the Helm chart
+    chart: "k8s/network-stats"

@@ -1,0 +1,83 @@
+# ResourceSet — GitLab Merge Request ephemeral environments
+#
+# For each open MR labeled `deploy/flux-preview` this ResourceSet
+# generates a GitRepository pinned to the MR HEAD SHA and a
+# HelmRelease that deploys the in-repo chart with the commit-SHA
+# image tag.  Everything lives in the network-stats-preview namespace
+# and is torn down automatically when the MR is merged or closed.
+#
+# Available inputs per MR row:
+#   inputs.id      — MR IID (e.g. "42")
+#   inputs.sha     — HEAD commit SHA
+#   inputs.branch  — source branch name
+#   inputs.author  — MR author username
+#   inputs.title   — MR title
+#   inputs.chart   — injected by defaultValues ("k8s/network-stats")
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: network-stats-mr
+  namespace: network-stats-preview
+spec:
+  serviceAccountName: flux
+  inputsFrom:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSetInputProvider
+      name: network-stats-merge-requests
+  resources:
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      metadata:
+        name: "network-stats-mr-<< inputs.id >>"
+        namespace: network-stats-preview
+      spec:
+        interval: 1h
+        url: https://gitlab.com/dxas90/network-stats
+        ref:
+          commit: "<< inputs.sha >>"
+        secretRef:
+          name: gitlab-token-readonly
+
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: "network-stats-mr-<< inputs.id >>"
+        namespace: network-stats-preview
+        annotations:
+          # Required by the gitlabmergerequestcomment notification provider
+          event.toolkit.fluxcd.io/change_request: "<< inputs.id | quote >>"
+          # Required by the gitlab commit-status notification provider
+          event.toolkit.fluxcd.io/commit: "<< inputs.sha | quote >>"
+          event.toolkit.fluxcd.io/preview-url: "https://network-stats-mr-<< inputs.id >>.preview.example.com"
+          event.toolkit.fluxcd.io/branch: "<< inputs.branch | quote >>"
+          event.toolkit.fluxcd.io/author: "<< inputs.author | quote >>"
+      spec:
+        serviceAccountName: flux
+        interval: 10m
+        releaseName: "network-stats-mr-<< inputs.id >>"
+        chart:
+          spec:
+            chart: "<< inputs.chart >>"
+            reconcileStrategy: Revision
+            sourceRef:
+              kind: GitRepository
+              name: "network-stats-mr-<< inputs.id >>"
+        maxHistory: 2
+        install:
+          createNamespace: false
+          remediation:
+            retries: 3
+        upgrade:
+          cleanupOnFail: true
+          remediation:
+            retries: 3
+        values:
+          image:
+            repository: registry.gitlab.com/dxas90/network-stats
+            tag: "<< inputs.sha >>"
+            pullPolicy: Always
+          httproute:
+            enabled: false
+          env:
+            variables:
+              APP_ENV: preview

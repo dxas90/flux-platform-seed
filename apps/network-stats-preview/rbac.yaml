@@ -1,0 +1,23 @@
+# RBAC for flux controllers scoped to network-stats-preview only.
+# The ServiceAccount is used by both the ResourceSet and any
+# GitRepository/HelmRelease objects it generates.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flux
+  namespace: network-stats-preview
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flux
+  namespace: network-stats-preview
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: admin
+subjects:
+  - kind: ServiceAccount
+    name: flux
+    namespace: network-stats-preview
