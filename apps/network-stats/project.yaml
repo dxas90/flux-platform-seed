@@ -13,7 +13,9 @@ spec:
       namespace: network-stats
     - server: https://kubernetes.default.svc
       namespace: network-stats-preview
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap
