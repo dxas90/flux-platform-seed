@@ -8,7 +8,7 @@ metadata:
   name: app-network-stats
   namespace: flux-system
 spec:
-  interval: 10m
+  interval: 1m
   retryInterval: 1m
   timeout: 5m
   sourceRef:
