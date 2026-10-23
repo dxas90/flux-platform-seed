@@ -12,7 +12,7 @@ Used by applicationset.yaml to call the GitLab API and discover open MRs.
     kubectl -n argocd create secret generic gitlab-token \
       --from-literal=token=<YOUR_GITLAB_PAT>
 
-Required GitLab PAT scopes: read_api, read_repository
+Required GitLab PAT scopes: api, read_repository
 
 ## Secret 2 — argocd-notifications (commit statuses)
 

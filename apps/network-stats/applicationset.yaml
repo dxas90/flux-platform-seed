@@ -16,13 +16,21 @@
 #   .author          MR author username
 #   .labels          array of label strings
 #
-# Prerequisites — create the Secret in the argocd namespace:
-#   kubectl -n argocd create secret generic gitlab-token \
-#     --from-literal=token=<GITLAB_PAT>   # scopes: read_api, read_repository
+# Prerequisites — two Secrets required in the argocd namespace:
 #
-# The GitLab project ID (numeric) is visible at:
-#   https://gitlab.com/dxas90/network-stats → Settings → General → Project ID
-# Replace GITLAB_PROJECT_ID below with that number.
+#   # 1. ApplicationSet PR generator — discovers open MRs via GitLab API:
+#   kubectl -n argocd create secret generic gitlab-token \
+#     --from-literal=token=<GITLAB_PAT>
+#   Required scopes: api, read_repository
+#
+#   # 2. argocd-notifications — posts commit statuses back to GitLab MRs.
+#   #    Key name MUST be "gitlab-token" (matches $gitlab-token in
+#   #    infrastructure/configs/base/argocd/notifications-patch.yaml):
+#   kubectl -n argocd create secret generic argocd-notifications-secret \
+#     --from-literal=gitlab-token=<GITLAB_PAT>
+#   Required scopes: api
+#
+# See also: apps/network-stats/SECRET.md
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
