@@ -13,7 +13,9 @@ spec:
       namespace: learn-python
     - server: https://kubernetes.default.svc
       namespace: learn-python-preview
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap

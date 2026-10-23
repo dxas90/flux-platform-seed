@@ -13,7 +13,9 @@ spec:
       namespace: learn-go
     - server: https://kubernetes.default.svc
       namespace: learn-go-preview
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap

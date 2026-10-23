@@ -13,7 +13,9 @@ spec:
       namespace: learn-node
     - server: https://kubernetes.default.svc
       namespace: learn-node-preview
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap

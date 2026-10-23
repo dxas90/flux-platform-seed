@@ -13,7 +13,9 @@ spec:
       namespace: learn-java
     - server: https://kubernetes.default.svc
       namespace: learn-java-preview
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap

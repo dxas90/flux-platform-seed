@@ -13,7 +13,9 @@ spec:
       namespace: learn-rust
     - server: https://kubernetes.default.svc
       namespace: learn-rust-preview
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap

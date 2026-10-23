@@ -13,7 +13,9 @@ spec:
       namespace: learn-ruby
     - server: https://kubernetes.default.svc
       namespace: learn-ruby-preview
-  clusterResourceWhitelist: []
+  clusterResourceWhitelist: 
+    - group: ""
+      kind: Namespace
   namespaceResourceWhitelist:
     - group: ""
       kind: ConfigMap
