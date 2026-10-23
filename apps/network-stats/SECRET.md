@@ -8,9 +8,14 @@ argocd-notifications read from separate locations).
 ## Secret 1 — ApplicationSet PR generator
 
 Used by applicationset.yaml to call the GitLab API and discover open MRs.
+The Secret MUST carry the label `argocd.argoproj.io/secret-type=scm-creds`
+or the ApplicationSet controller rejects it with:
+"secret is not a valid SCM creds secret: secret must have label argocd.argoproj.io/secret-type=scm-creds"
 
     kubectl -n argocd create secret generic gitlab-token \
       --from-literal=token=<YOUR_GITLAB_PAT>
+    kubectl -n argocd label secret gitlab-token \
+      argocd.argoproj.io/secret-type=scm-creds
 
 Required GitLab PAT scopes: api, read_repository
 

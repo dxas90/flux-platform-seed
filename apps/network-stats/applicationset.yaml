@@ -18,9 +18,13 @@
 #
 # Prerequisites — two Secrets required in the argocd namespace:
 #
-#   # 1. ApplicationSet PR generator — discovers open MRs via GitLab API:
+#   # 1. ApplicationSet PR generator — discovers open MRs via GitLab API.
+#   #    MUST carry the label argocd.argoproj.io/secret-type=scm-creds
+#   #    or the controller rejects it with "not a valid SCM creds secret":
 #   kubectl -n argocd create secret generic gitlab-token \
 #     --from-literal=token=<GITLAB_PAT>
+#   kubectl -n argocd label secret gitlab-token \
+#     argocd.argoproj.io/secret-type=scm-creds
 #   Required scopes: api, read_repository
 #
 #   # 2. argocd-notifications — posts commit statuses back to GitLab MRs.

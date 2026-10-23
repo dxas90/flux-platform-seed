@@ -1,0 +1,6 @@
+# metrics-server values for kind/k3d clusters.
+# Kubelets in kind use self-signed TLS certificates — metrics-server must
+# skip kubelet cert verification or it cannot scrape node/pod metrics,
+# causing HPA to fail with "unable to fetch metrics from resource metrics API".
+args:
+  - --kubelet-insecure-tls
