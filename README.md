@@ -2,7 +2,7 @@
 
 A reusable starting point for running Kubernetes platform add-ons with Flux Operator, FluxCD, Kustomize, and Helm.
 
-This repository owns cluster infrastructure and the ArgoCD controller. Application registrations and workload manifests belong in separate repositories.
+This repository owns cluster infrastructure, the ArgoCD controller, and the app catalog that teams use to register their applications.
 
 ## What is included
 
@@ -36,6 +36,11 @@ flux-operator
     └── GitRepository/flux-system + Kustomization/flux-system
         ├── infra-controllers  → namespaces, CRDs, Helm repositories and releases
         └── infra-configs      → resources that require those controllers/CRDs
+                                 └── platform-apps (ArgoCD Application)
+                                       └── renders charts/app-template + catalog.yaml
+                                             ├── AppProject/<name>
+                                             ├── Application/<name>        (stable)
+                                             └── ApplicationSet/<name>-preview  (opt-in)
 ```
 
 The operator creates and owns the Flux controllers. `FluxInstance` configures the distribution and points Flux at one cluster directory in this repository. The cluster entrypoint creates two ordered Flux Kustomizations:
@@ -52,6 +57,9 @@ clusters/
   kind/                         # Local test cluster
   staging/                      # Staging cluster entrypoint
   prod/                         # Production cluster entrypoint
+charts/
+  app-template/                 # Helm chart — generates ArgoCD resources from catalog.yaml
+    catalog.yaml                # ← THE ONE FILE teams edit to register apps
 infrastructure/
   controllers/
     base/                       # Add-on catalog
@@ -64,7 +72,7 @@ infrastructure/
     staging/
     prod/
 examples/
-  onboarding/                   # Namespace/AppProject/Application examples
+  onboarding/                   # Namespace/AppProject/Application examples (advanced)
   sources/                      # Bucket, OCI, ArtifactGenerator examples
 scripts/
   bootstrap.sh                  # Apply a configured FluxInstance
@@ -99,7 +107,7 @@ spec:
 Configure the target branch and keep each cluster's path aligned with its directory:
 
 | Cluster | `spec.sync.path` |
-|---|---|
+| --- | --- |
 | kind | `clusters/kind` |
 | staging | `clusters/staging` |
 | prod | `clusters/prod` |
@@ -255,16 +263,22 @@ python3 scripts/create_pull_secret.py \
 
 The script creates an Opaque Secret with the `identity` and `known_hosts` keys expected by Flux source-controller. Never commit the private key or generated Secret.
 
-## Application delivery boundary
+## Application delivery
 
-This repository installs ArgoCD and may define platform-owned AppProjects and namespaces. Keep ArgoCD Application registrations and business workloads in a separate repository.
+Applications are registered in [`charts/app-template/catalog.yaml`](charts/app-template/catalog.yaml). Add one entry and open a PR — ArgoCD creates the `AppProject`, `Application`, and (opt-in) preview `ApplicationSet` automatically.
 
-The onboarding examples demonstrate the contract only:
+```yaml
+# charts/app-template/catalog.yaml
+apps:
+  - name: my-service
+    repo: https://github.com/my-org/my-service.git
+    chart: k8s/chart
+    registry: ghcr.io/my-org/my-service
+```
 
-- `examples/onboarding/team-platform.yaml` is a platform-owner example.
-- `examples/onboarding/application.yaml` is an application-repository example.
+See [Application onboarding](docs/application-onboarding.md) and [`charts/app-template/README.md`](charts/app-template/README.md) for the full guide including preview environments (GitHub PRs, GitLab MRs, self-hosted GitLab).
 
-See [Application onboarding](docs/application-onboarding.md).
+The `examples/onboarding/` directory shows the manual AppProject/Application pattern for teams that need finer control than the catalog provides.
 
 ## Source composition
 

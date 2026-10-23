@@ -49,6 +49,13 @@ A change is complete when all applicable checks pass:
 9. Documentation explains new components, dependencies, and operational assumptions.
 10. The final report lists the exact commands run and their actual results.
 
+For changes to `charts/app-template/` or `catalog.yaml`, also run:
+
+```sh
+helm lint charts/app-template -f charts/app-template/catalog.yaml
+helm template platform-apps charts/app-template -f charts/app-template/catalog.yaml > /dev/null
+```
+
 Run:
 
 ```sh

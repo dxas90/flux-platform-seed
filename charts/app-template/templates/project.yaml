@@ -1,0 +1,34 @@
+{{- range .Values.apps }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .name }}
+  namespace: argocd
+spec:
+  description: {{ printf "%s — %s" .name .repo | quote }}
+  sourceRepos:
+    - {{ .repo }}
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: {{ .name }}
+    {{- if .preview }}
+    - server: https://kubernetes.default.svc
+      namespace: {{ (.preview).namespace | default (printf "%s-preview" .name) }}
+    {{- end }}
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - { group: "",                  kind: ConfigMap }
+    - { group: "",                  kind: Secret }
+    - { group: "",                  kind: Service }
+    - { group: "",                  kind: ServiceAccount }
+    - { group: "",                  kind: PersistentVolumeClaim }
+    - { group: apps,                kind: Deployment }
+    - { group: autoscaling,         kind: HorizontalPodAutoscaler }
+    - { group: policy,              kind: PodDisruptionBudget }
+    - { group: networking.k8s.io,   kind: Ingress }
+    - { group: networking.k8s.io,   kind: NetworkPolicy }
+    - { group: networking.x-k8s.io, kind: HTTPRoute }
+{{- end }}

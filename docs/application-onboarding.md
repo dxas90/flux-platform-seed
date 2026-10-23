@@ -1,55 +1,105 @@
-# Platform-side application onboarding
+# Application onboarding
 
-Application delivery is intentionally split across repositories:
+Applications are registered in this repository via a single catalog file. One pull request to one file onboards an app with its ArgoCD `AppProject`, stable `Application`, and (opt-in) preview `ApplicationSet`.
 
-| Repository | Owner | Contents |
-|---|---|---|
-| Platform repository | Platform team | ArgoCD, namespaces, AppProjects, repository access, identity, quotas, policy |
-| Application-delivery repository | Application teams | ArgoCD Application registrations |
-| Workload repository | Application team | Deployments, Services, configuration, charts or Kustomize overlays |
+## Quick start — add your app
 
-This repository is the platform repository.
+Edit [`charts/app-template/catalog.yaml`](../charts/app-template/catalog.yaml):
 
-## Platform setup for a team
+```yaml
+apps:
+  - name: my-service
+    repo: https://github.com/my-org/my-service.git
+    chart: k8s/chart
+    registry: ghcr.io/my-org/my-service
+```
 
-Before accepting an Application registration, create and review:
+Open a PR. ArgoCD syncs within seconds of merge.
 
-1. A dedicated namespace with the required Pod Security labels.
-2. An AppProject with exact source repositories and destination namespaces.
-3. ArgoCD repository credentials delivered through an approved secret mechanism.
-4. Workload identity and any ExternalSecrets required by the application.
-5. ResourceQuota, LimitRange, NetworkPolicy, and admission rules appropriate for the environment.
+See [`charts/app-template/README.md`](../charts/app-template/README.md) for the full field reference, preview environment setup (GitHub PRs and GitLab MRs), and annotated examples.
 
-Start from `examples/onboarding/team-platform.yaml`, then move the customized resources into the relevant environment under `infrastructure/configs/<environment>/`.
+## What gets created
 
-## AppProject rules
+For every catalog entry ArgoCD creates:
 
-Avoid the default project. A team project should:
+| Resource | Scope |
+| --- | --- |
+| `AppProject/<name>` | Scopes the app's source repo and destination namespaces |
+| `Application/<name>` | Deploys the stable branch to the `<name>` namespace |
+| `ApplicationSet/<name>-preview` | *(opt-in)* One ephemeral Application per open PR/MR |
 
-- Allow only approved source repositories.
-- Allow only the team's destination namespace.
-- Deny cluster-scoped resources unless explicitly required.
-- Allow only the namespace-scoped resource kinds the team needs.
+The platform `AppProject` (`platform`) is the only project that can manage these resources. No direct edits to the `argocd` namespace are needed.
 
-The example is intentionally restrictive and may need additional workload resource kinds.
+## How it works
 
-## Application registration
+The `platform-apps` ArgoCD Application renders `charts/app-template` with `catalog.yaml` as its values file. Every merged catalog change immediately triggers a sync:
 
-Application registrations do not belong in this repository. Keep them in a separate application-delivery repository. The example at `examples/onboarding/application.yaml` shows the expected contract:
+```text
+Git push → ArgoCD detects change → renders charts/app-template + catalog.yaml
+         → creates/updates AppProject + Application + ApplicationSet
+```
 
-- `metadata.namespace: argocd`
-- A non-default, platform-managed project
-- An approved repository URL and target revision
-- The team's existing destination namespace
-- `FailOnSharedResource=true`
-- No cascading deletion finalizer by default
+The chart lives at `charts/app-template/`. `catalog.yaml` is co-located so ArgoCD can load it as a Helm values file without multi-source configuration.
+
+## Preview environments
+
+Preview environments are **opt-in**. To activate them, add a `preview` block to your catalog entry and label the PR/MR with **`preview`**.
+
+```yaml
+# GitHub PR previews
+- name: my-service
+  ...
+  preview:
+    github: {}            # owner/repo extracted from the repo URL
+
+# GitLab MR previews (gitlab.com)
+- name: my-service
+  ...
+  preview:
+    gitlab:
+      projectId: "12345678"
+
+# Self-hosted GitLab
+- name: my-service
+  ...
+  preview:
+    gitlab:
+      url: https://gitlab.mycompany.com
+      projectId: "42"
+```
+
+Required secrets (one-time, platform admin):
+
+```sh
+# GitHub
+kubectl -n argocd create secret generic github-token \
+  --from-literal=token=<GITHUB_PAT>     # scopes: repo (read)
+
+# GitLab
+kubectl -n argocd create secret generic gitlab-token \
+  --from-literal=token=<GITLAB_PAT>     # scopes: api, read_repository
+```
+
+## Namespace and RBAC model
+
+- Each app gets a dedicated namespace (`<name>`) and an optional preview namespace (`<name>-preview`).
+- The `AppProject` allows only the app's own source repository.
+- Cluster-scoped resources are blocked by default (`clusterResourceWhitelist: []`).
+- Allowed namespace-scoped kinds: ConfigMap, Secret, Service, ServiceAccount, PVC, Deployment, HPA, PDB, Ingress, NetworkPolicy, HTTPRoute.
+
+To allow additional resource kinds, add `namespaceResourceWhitelist` entries to the Helm chart's `templates/project.yaml`.
+
+## Advanced: manual AppProject / Application
+
+For teams that need finer control than the catalog provides (custom RBAC, multi-source Applications, non-standard destinations), the manual pattern is still supported:
+
+- `examples/onboarding/team-platform.yaml` — platform-side setup reference
+- `examples/onboarding/application.yaml` — Application registration reference
+
+Manual resources belong in `infrastructure/configs/<environment>/` so they are deployed by the `infra-configs` Flux Kustomization before any ArgoCD sync runs.
 
 ## Ownership boundary
 
-Flux owns this platform repository and the ArgoCD controller. ArgoCD owns objects rendered by Applications. Do not configure both controllers to reconcile the same workload resource.
+Flux owns this repository and the ArgoCD controller. ArgoCD owns the objects rendered by `platform-apps`. Do not configure both controllers to reconcile the same workload resource.
 
-Removing an Application object without a cascading finalizer leaves its workloads behind. Decommission applications deliberately, including persistent data and external resources.
-
-## Security boundary
-
-AppProject restrictions are necessary but not sufficient for hostile multi-tenancy. Repository approval, ArgoCD RBAC, admission policy, workload identity, network policy, and secret access must enforce the same team boundary.
+Removing a catalog entry prunes the `Application` and its workloads (automated prune is on). Decommission applications deliberately, including persistent data and external resources.

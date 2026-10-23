@@ -263,7 +263,7 @@ def main():
     parser.add_argument('--helm', action='store_true', help='download and render every pinned chart (network required)')
     args = parser.parse_args()
     for path in ROOT.rglob('*.yaml'):
-        if not any(p in path.parts for p in ('.cache', '.venv')):
+        if not any(p in path.parts for p in ('.cache', '.venv', 'charts')):
             documents(path.read_text())
     renovate = ROOT / 'renovate.json5'
     if not renovate.exists():
@@ -273,7 +273,7 @@ def main():
         json.loads(renovate.read_text())
     builds = {}
     for path in sorted(ROOT.rglob('kustomization.yaml')):
-        if any(p in path.parts for p in ('.cache', '.venv')):
+        if any(p in path.parts for p in ('.cache', '.venv', 'charts')):
             continue
         objects = documents(run(['kustomize', 'build', str(path.parent)]))
         check_build(objects, path)

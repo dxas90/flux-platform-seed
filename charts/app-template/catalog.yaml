@@ -1,0 +1,141 @@
+# ════════════════════════════════════════════════════════════════════════════════
+#  App Catalog  ·  charts/app-template/catalog.yaml
+# ════════════════════════════════════════════════════════════════════════════════
+#
+#  This is THE ONLY FILE you need to edit to register a new application.
+#
+#  One pull request to this file = one application onboarded, with:
+#    • an ArgoCD AppProject scoping your repo + namespaces
+#    • a stable Application deploying your Helm chart from <targetRevision>
+#    • (opt-in) an ApplicationSet creating a preview environment per PR/MR
+#
+#  See charts/app-template/README.md for the full onboarding guide.
+# ════════════════════════════════════════════════════════════════════════════════
+
+apps:
+  # ── GitHub apps ──────────────────────────────────────────────────────────────
+  # GitHub owner + repo are extracted automatically from the repo URL.
+  # Add "preview: { github: {} }" to opt-in to PR preview environments.
+
+  - name: learn-go
+    repo: https://github.com/dxas90/learn-go.git
+    chart: k8s/chart
+    registry: ghcr.io/dxas90/learn-go
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      github: {}
+
+  - name: learn-java
+    repo: https://github.com/dxas90/learn-java.git
+    chart: k8s/learn-java
+    registry: ghcr.io/dxas90/learn-java
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      github: {}
+
+  - name: learn-node
+    repo: https://github.com/dxas90/learn-node.git
+    chart: k8s/learn-node
+    registry: ghcr.io/dxas90/learn-node
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      github: {}
+
+  - name: learn-php
+    repo: https://github.com/dxas90/learn-php.git
+    chart: k8s/learn-php
+    registry: ghcr.io/dxas90/learn-php
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      github: {}
+
+  - name: learn-python
+    repo: https://github.com/dxas90/learn-python.git
+    chart: k8s/learn-python
+    registry: ghcr.io/dxas90/learn-python
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      github: {}
+
+  - name: learn-ruby
+    repo: https://github.com/dxas90/learn-ruby.git
+    chart: k8s/learn-ruby
+    registry: ghcr.io/dxas90/learn-ruby
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      github: {}
+
+  - name: learn-rust
+    repo: https://github.com/dxas90/learn-rust.git
+    chart: k8s/chart
+    registry: ghcr.io/dxas90/learn-rust
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      github: {}
+
+  # ── GitLab.com app ────────────────────────────────────────────────────────────
+  # For GitLab, add "preview.gitlab.projectId" (numeric string from
+  # Settings → General in the GitLab project).
+
+  - name: network-stats
+    repo: https://gitlab.com/dxas90/network-stats.git
+    chart: k8s/network-stats
+    registry: registry.gitlab.com/dxas90/network-stats
+    extraHelmParameters:
+      - name: env.variables.APP_ENV
+        value: production
+    preview:
+      gitlab:
+        projectId: "30270366"     # Settings → General → Project ID in GitLab
+
+  # ── Template: add a new app below ────────────────────────────────────────────
+  # Minimum required fields (no preview):
+  #
+  # - name: my-app
+  #   repo: https://github.com/my-org/my-app.git
+  #   chart: k8s/chart
+  #   registry: ghcr.io/my-org/my-app
+  #
+  # GitHub PR previews (opt-in):
+  #
+  # - name: my-app
+  #   repo: https://github.com/my-org/my-app.git
+  #   chart: k8s/chart
+  #   registry: ghcr.io/my-org/my-app
+  #   preview:
+  #     github: {}                # Label the PR with "preview" to activate
+  #
+  # GitLab.com MR previews (opt-in):
+  #
+  # - name: my-service
+  #   repo: https://gitlab.com/my-group/my-service.git
+  #   chart: k8s/chart
+  #   registry: registry.gitlab.com/my-group/my-service
+  #   preview:
+  #     gitlab:
+  #       projectId: "12345678"   # Numeric ID from Settings → General
+  #
+  # Self-hosted GitLab MR previews (opt-in):
+  #
+  # - name: my-service
+  #   repo: https://gitlab.mycompany.com/team/my-service.git
+  #   chart: k8s/chart
+  #   registry: registry.mycompany.com/team/my-service
+  #   preview:
+  #     gitlab:
+  #       url: https://gitlab.mycompany.com   # omit for gitlab.com
+  #       projectId: "42"

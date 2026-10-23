@@ -1,0 +1,77 @@
+{{- range .Values.apps }}
+{{- if and .preview (ne ((.preview).enabled | toString) "false") }}
+{{- $lb := "{{" }}
+{{- $rb := "}}" }}
+{{- $app := . }}
+{{- $vals := $ }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ .name }}-preview
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions:
+    - missingkey=error
+  generators:
+    - pullRequest:
+        {{- if .preview.gitlab }}
+        gitlab:
+          project: {{ .preview.gitlab.projectId | quote }}
+          {{- if .preview.gitlab.url }}
+          gitlabUrl: {{ .preview.gitlab.url }}
+          {{- end }}
+          tokenRef:
+            secretName: {{ $vals.Values.tokens.gitlab.secretName }}
+            key: {{ $vals.Values.tokens.gitlab.key }}
+          labels:
+            {{- range $vals.Values.defaults.preview.labels }}
+            - {{ . }}
+            {{- end }}
+        {{- else }}
+        github:
+          owner: {{ include "app-template.githubOwner" .repo }}
+          repo: {{ include "app-template.githubRepo" .repo }}
+          tokenRef:
+            secretName: {{ $vals.Values.tokens.github.secretName }}
+            key: {{ $vals.Values.tokens.github.key }}
+          labels:
+            {{- range $vals.Values.defaults.preview.labels }}
+            - {{ . }}
+            {{- end }}
+        {{- end }}
+        requeueAfterSeconds: {{ $vals.Values.defaults.preview.requeueAfterSeconds }}
+  template:
+    metadata:
+      name: {{ printf "%s-preview-%s.number%s-%s.branch_slug%s" .name $lb $rb $lb $rb | quote }}
+    spec:
+      project: {{ .name }}
+      source:
+        repoURL: {{ .repo }}
+        targetRevision: {{ printf "%s.head_sha%s" $lb $rb | quote }}
+        path: {{ .chart }}
+        helm:
+          releaseName: {{ printf "%s-preview-%s.number%s" .name $lb $rb | quote }}
+          parameters:
+            - name: image.repository
+              value: {{ .registry }}
+            - name: image.tag
+              value: {{ printf "%s.head_sha%s" $lb $rb | quote }}
+            {{- range .extraHelmParameters }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: {{ (.preview).namespace | default (printf "%s-preview" .name) }}
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          {{- range $vals.Values.defaults.syncOptions }}
+          - {{ . }}
+          {{- end }}
+{{- end }}
+{{- end }}

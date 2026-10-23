@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "app-template values",
+  "type": "object",
+  "properties": {
+    "tokens": {
+      "type": "object",
+      "properties": {
+        "github": { "$ref": "#/definitions/tokenRef" },
+        "gitlab": { "$ref": "#/definitions/tokenRef" }
+      }
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "targetRevision": { "type": "string" },
+        "syncOptions": { "type": "array", "items": { "type": "string" } },
+        "preview": {
+          "type": "object",
+          "properties": {
+            "requeueAfterSeconds": { "type": "integer", "minimum": 60 },
+            "labels": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "apps": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/app" }
+    }
+  },
+  "definitions": {
+    "tokenRef": {
+      "type": "object",
+      "required": ["secretName", "key"],
+      "properties": {
+        "secretName": { "type": "string" },
+        "key": { "type": "string" }
+      }
+    },
+    "app": {
+      "type": "object",
+      "required": ["name", "repo", "chart", "registry"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "App name — lowercase, hyphens OK, must match Kubernetes name rules"
+        },
+        "repo": {
+          "type": "string",
+          "format": "uri",
+          "description": "Full HTTPS clone URL including .git suffix"
+        },
+        "chart": {
+          "type": "string",
+          "description": "Path to the Helm chart directory inside the repo (e.g. k8s/chart)"
+        },
+        "registry": {
+          "type": "string",
+          "description": "Container image repository without tag (e.g. ghcr.io/org/app)"
+        },
+        "targetRevision": {
+          "type": "string",
+          "description": "Git ref for the stable deployment; overrides defaults.targetRevision"
+        },
+        "extraHelmParameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "value"],
+            "properties": {
+              "name":  { "type": "string" },
+              "value": { "type": "string" }
+            }
+          },
+          "description": "Additional helm parameters passed to the stable Application"
+        },
+        "preview": {
+          "type": "object",
+          "description": "Preview environment config. Omit to disable previews for this app.",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Set false to temporarily disable previews without removing the block"
+            },
+            "namespace": {
+              "type": "string",
+              "description": "Override the preview namespace (default: <name>-preview)"
+            },
+            "github": {
+              "type": "object",
+              "description": "GitHub PR preview. Owner/repo are extracted from the repo URL automatically.",
+              "properties": {
+                "enabled": { "type": "boolean" }
+              }
+            },
+            "gitlab": {
+              "type": "object",
+              "required": ["projectId"],
+              "description": "GitLab MR preview. Works with gitlab.com and self-hosted instances.",
+              "properties": {
+                "projectId": {
+                  "type": "string",
+                  "pattern": "^[0-9]+$",
+                  "description": "Numeric project ID from GitLab Settings > General (e.g. \"30270366\")"
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Base URL of your GitLab instance. Omit for gitlab.com."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

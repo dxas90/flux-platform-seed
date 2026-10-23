@@ -1,0 +1,37 @@
+# Platform defaults — managed by the platform team.
+# Do NOT put app registrations here; use catalog.yaml.
+
+# ── Token secrets ──────────────────────────────────────────────────────────────
+# These secrets must exist in the 'argocd' namespace before previews work:
+#
+#   kubectl -n argocd create secret generic github-token \
+#     --from-literal=token=<GITHUB_PAT>          # scopes: repo (read)
+#
+#   kubectl -n argocd create secret generic gitlab-token \
+#     --from-literal=token=<GITLAB_PAT>          # scopes: api (read_api)
+#
+# For self-hosted GitLab the same gitlab-token secret is reused — the URL
+# is configured per-app in catalog.yaml under preview.gitlab.url.
+tokens:
+  github:
+    secretName: github-token
+    key: token
+  gitlab:
+    secretName: gitlab-token
+    key: token
+
+# ── Sync behaviour (applied to every app and preview) ─────────────────────────
+defaults:
+  targetRevision: main
+  syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
+    - FailOnSharedResource=true
+  preview:
+    requeueAfterSeconds: 600
+    labels:
+      - preview
+
+# ── App registrations ─────────────────────────────────────────────────────────
+# Populated by catalog.yaml (via helm --values). Do not add apps here.
+apps: []

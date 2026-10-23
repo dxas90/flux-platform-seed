@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  description: "Platform management — deploys the app catalog from flux-platform-seed"
+  sourceRepos:
+    - https://github.com/dxas90/flux-platform-seed.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - { group: argoproj.io, kind: AppProject }
+    - { group: argoproj.io, kind: Application }
+    - { group: argoproj.io, kind: ApplicationSet }
