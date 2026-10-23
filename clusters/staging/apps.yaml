@@ -16,6 +16,155 @@ spec:
     name: flux-system
   path: ./apps/network-stats
   prune: true
+  deletionPolicy: Orphan
+  wait: true
+  serviceAccountName: kustomize-controller
+  dependsOn:
+    - name: infra-configs
+---
+# Flux Kustomization — learn-go ArgoCD resources (staging)
+# AppProject + Application (stable) + ApplicationSet (GitHub PR previews).
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-learn-go
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/learn-go
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  serviceAccountName: kustomize-controller
+  dependsOn:
+    - name: infra-configs
+---
+# Flux Kustomization — learn-node ArgoCD resources (staging)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-learn-node
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/learn-node
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  serviceAccountName: kustomize-controller
+  dependsOn:
+    - name: infra-configs
+---
+# Flux Kustomization — learn-python ArgoCD resources (staging)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-learn-python
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/learn-python
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  serviceAccountName: kustomize-controller
+  dependsOn:
+    - name: infra-configs
+---
+# Flux Kustomization — learn-ruby ArgoCD resources (staging)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-learn-ruby
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/learn-ruby
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  serviceAccountName: kustomize-controller
+  dependsOn:
+    - name: infra-configs
+---
+# Flux Kustomization — learn-rust ArgoCD resources (staging)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-learn-rust
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/learn-rust
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  serviceAccountName: kustomize-controller
+  dependsOn:
+    - name: infra-configs
+---
+# Flux Kustomization — learn-java ArgoCD resources (staging)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-learn-java
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/learn-java
+  prune: true
+  deletionPolicy: Orphan
+  wait: true
+  serviceAccountName: kustomize-controller
+  dependsOn:
+    - name: infra-configs
+---
+# Flux Kustomization — learn-php ArgoCD resources (staging)
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: app-learn-php
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./apps/learn-php
+  prune: true
+  deletionPolicy: Orphan
   wait: true
   serviceAccountName: kustomize-controller
   dependsOn:

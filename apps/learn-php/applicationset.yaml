@@ -1,0 +1,63 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json
+# ArgoCD ApplicationSet — learn-php GitHub PR preview environments
+#
+# Prerequisites — create the Secret in the argocd namespace:
+#   kubectl -n argocd create secret generic github-token \
+#     --from-literal=token=<GITHUB_PAT>   # scopes: repo (read)
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: learn-php-preview
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - pullRequest:
+        github:
+          owner: dxas90
+          repo: learn-php
+          tokenRef:
+            secretName: github-token
+            key: token
+          labels:
+            - preview
+        requeueAfterSeconds: 600
+  syncPolicy:
+    applicationsSync: sync
+  template:
+    metadata:
+      name: "learn-php-preview-{{.number}}-{{.branch_slug}}"
+      namespace: argocd
+      labels:
+        app.kubernetes.io/managed-by: argocd-applicationset
+        preview/mr-number: "{{.number}}"
+        preview/app: learn-php
+    spec:
+      project: learn-php
+      source:
+        repoURL: https://github.com/dxas90/learn-php.git
+        targetRevision: "{{.head_sha}}"
+        path: k8s/learn-php
+        helm:
+          releaseName: "learn-php-{{.number}}-{{.branch_slug}}"
+          parameters:
+            - name: image.repository
+              value: ghcr.io/dxas90/learn-php
+            - name: image.tag
+              value: "{{.head_sha}}"
+            - name: image.pullPolicy
+              value: Always
+            - name: env.variables.APP_ENV
+              value: preview
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: learn-php-preview
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - FailOnSharedResource=true

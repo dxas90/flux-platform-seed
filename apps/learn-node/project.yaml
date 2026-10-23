@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/appproject_v1alpha1.json
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: learn-node
+  namespace: argocd
+spec:
+  description: "learn-node — https://github.com/dxas90/learn-node"
+  sourceRepos:
+    - https://github.com/dxas90/learn-node.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: learn-node
+    - server: https://kubernetes.default.svc
+      namespace: learn-node-preview
+  clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ServiceAccount
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: apps
+      kind: Deployment
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+    - group: networking.x-k8s.io
+      kind: HTTPRoute
