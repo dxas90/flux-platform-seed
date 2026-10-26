@@ -65,6 +65,20 @@ Create these secrets outside Helm values:
 - API credential in `flux-previews`, with `username` and read-only `password`, for MR discovery.
 - Git clone credential in `flux-system`, with read-only repository access, for generated GitRepositories.
 
+### Preview namespace layout
+
+Each MR gets its own namespace (`<app>-<mr-id>`). The per-MR `HelmRelease` and its Helm release storage (`storageNamespace`) both live in that namespace. The `GitRepository` lives in `flux-system` so it can reference the clone credential Secret there via `secretRef`.
+
+This layout avoids the following RBAC error, which occurs when `storageNamespace` is set to `flux-system` but the preview ServiceAccount only has access to the per-MR namespace:
+
+```
+Could not determine release state: failed to retrieve last release from storage:
+secrets is forbidden: User "system:serviceaccount:flux-system:helm-preview-<app>"
+cannot list resource "secrets" in API group "" in the namespace "flux-system"
+```
+
+The root cause: Helm stores its release state as `Secret` objects in `storageNamespace`. The `helm-preview-<app>` ServiceAccount is scoped to the per-MR namespace via a `Role` + `RoleBinding` — it has no access to `flux-system` Secrets. Moving `storageNamespace` to the per-MR namespace resolves it.
+
 MR previews execute chart and workload content from the MR. Enable them only for trusted repositories and review the generated RBAC and admission policies before allowing external contributors.
 
 ## Validation

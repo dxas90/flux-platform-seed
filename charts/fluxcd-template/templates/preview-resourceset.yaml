@@ -99,7 +99,7 @@ spec:
       kind: HelmRelease
       metadata:
         name: {{ .name }}-<< inputs.id >>
-        namespace: {{ $ctrl }}
+        namespace: {{ $previewNS }}
         annotations:
           event.toolkit.fluxcd.io/change_request: "<< inputs.id | quote >>"
           event.toolkit.fluxcd.io/commit: "<< inputs.sha | quote >>"
@@ -113,7 +113,7 @@ spec:
       spec:
         serviceAccountName: helm-preview-{{ .name }}
         targetNamespace: {{ $previewNS }}
-        storageNamespace: {{ $ctrl }}
+        storageNamespace: {{ $previewNS }}
         releaseName: {{ .name }}-<< inputs.id >>
         interval: {{ default $defaults.interval .interval }}
         timeout: {{ $defaults.timeout }}
