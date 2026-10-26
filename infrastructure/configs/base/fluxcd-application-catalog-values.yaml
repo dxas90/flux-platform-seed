@@ -13,7 +13,7 @@ data:
     defaults:
       targetRevision: main
       interval: 10m
-      retryInterval: 2m
+
       timeout: 5m
       install:
         remediation:

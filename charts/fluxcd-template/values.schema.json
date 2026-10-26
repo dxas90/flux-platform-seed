@@ -29,7 +29,6 @@
             "required": [
                 "targetRevision",
                 "interval",
-                "retryInterval",
                 "timeout",
                 "install",
                 "upgrade",
@@ -40,9 +39,6 @@
                     "type": "string"
                 },
                 "interval": {
-                    "type": "string"
-                },
-                "retryInterval": {
                     "type": "string"
                 },
                 "timeout": {

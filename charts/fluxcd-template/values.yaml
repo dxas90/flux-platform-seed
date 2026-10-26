@@ -30,7 +30,6 @@ previewTokenSecret: gitlab-token-readonly
 defaults:
   targetRevision: main
   interval: 10m
-  retryInterval: 2m
   timeout: 5m
   # syncOptions forwarded to every HelmRelease
   install:
