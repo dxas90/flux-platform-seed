@@ -1,4 +1,70 @@
 # Flux application catalog
 # Add Flux-managed applications here. ArgoCD-managed applications belong in
 # charts/argocd-template/catalog.yaml. Do not register one workload in both.
-apps: []
+#
+# Required fields per app:
+#   name       — used as namespace, HelmRelease name, and resource prefix
+#   repo       — GitLab HTTPS URL (with or without .git)
+#   chart      — path to Helm chart inside the repo (e.g. k8s/my-app)
+#   registry   — container image registry path (no tag)
+#
+# Optional fields:
+#   gitSecretRef          — Secret name in flux-system for cloning private repos
+#                           (stable GitRepository + preview GitRepositories)
+#   targetRevision        — branch/tag to track; overrides defaults.targetRevision
+#   interval              — reconcile interval; overrides defaults.interval
+#   preview.gitlab        — set to {} to enable MR preview environments
+#   preview.gitSecretRef  — clone credential for preview GitRepositories only
+#                           (overrides gitSecretRef for previews; omit for public repos)
+#   preview.tokenSecret   — API token Secret in flux-previews; overrides previewTokenSecret
+#   preview.domain        — preview URL suffix; defaults to "preview.example.com"
+#   preview.enabled       — set to false to disable previews without removing the block
+#
+# Secret setup for private repos:
+#
+#   # Clone credential (both stable + preview GitRepositories):
+#   kubectl -n flux-system create secret generic <gitSecretRef-value> \
+#     --from-literal=username=oauth2 \
+#     --from-literal=password=<GITLAB_PAT>   # scopes: read_repository
+#
+#   # API scan credential (ResourceSetInputProvider — one per app or shared):
+#   kubectl -n flux-previews create secret generic <tokenSecret-value> \
+#     --from-literal=username=oauth2 \
+#     --from-literal=password=<GITLAB_PAT>   # scopes: read_api
+#
+#   # The default shared API credential (used when preview.tokenSecret is not set):
+#   kubectl -n flux-previews create secret generic gitlab-token-readonly \
+#     --from-literal=username=oauth2 \
+#     --from-literal=password=<GITLAB_PAT>
+#
+# Example — two private GitLab apps sharing the default API scan credential
+# but each with their own clone credential:
+#
+#   - name: my-app
+#     repo: https://gitlab.com/myorg/my-app.git
+#     chart: k8s/my-app
+#     registry: registry.gitlab.com/myorg/my-app
+#     gitSecretRef: my-app-clone-creds      # Secret in flux-system
+#     preview:
+#       gitlab: {}
+#       # gitSecretRef not set — falls back to top-level gitSecretRef above
+#
+#   - name: another-app
+#     repo: https://gitlab.com/myorg/another-app.git
+#     chart: charts/another-app
+#     registry: registry.gitlab.com/myorg/another-app
+#     gitSecretRef: another-app-clone-creds
+#     preview:
+#       gitlab: {}
+#       gitSecretRef: another-app-preview-creds  # separate preview clone credential
+#       tokenSecret: another-app-token-readonly  # separate API scan credential
+#       domain: another.preview.example.com
+
+apps:
+  - name: network-stats
+    repo: https://gitlab.com/dxas90/network-stats.git
+    chart: k8s/network-stats
+    registry: registry.gitlab.com/dxas90/network-stats
+    # Public repo — no gitSecretRef needed.
+    preview:
+      gitlab: {}

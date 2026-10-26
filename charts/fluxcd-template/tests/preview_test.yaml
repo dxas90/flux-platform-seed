@@ -159,3 +159,57 @@ tests:
       - hasDocuments:
           count: 3
         template: templates/preview-rbac.yaml
+
+  - it: public repo — GitRepository has no secretRef
+    templates:
+      - templates/preview-resourceset.yaml
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            gitlab: {}
+    # ResourceSet is document 0; GitRepository is the 5th resource inside it
+    documentIndex: 0
+    asserts:
+      - notExists:
+          path: spec.resources[4].spec.secretRef
+
+  - it: top-level gitSecretRef propagates to preview GitRepository
+    templates:
+      - templates/preview-resourceset.yaml
+    set:
+      apps:
+        - name: private-app
+          repo: https://gitlab.com/org/private-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/private-app
+          gitSecretRef: private-app-clone-creds
+          preview:
+            gitlab: {}
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.resources[4].spec.secretRef.name
+          value: private-app-clone-creds
+
+  - it: preview.gitSecretRef overrides top-level gitSecretRef
+    templates:
+      - templates/preview-resourceset.yaml
+    set:
+      apps:
+        - name: private-app
+          repo: https://gitlab.com/org/private-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/private-app
+          gitSecretRef: top-level-creds
+          preview:
+            gitlab: {}
+            gitSecretRef: preview-only-creds
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.resources[4].spec.secretRef.name
+          value: preview-only-creds

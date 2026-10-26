@@ -90,8 +90,11 @@ spec:
         url: {{ .repo }}
         ref:
           commit: << inputs.sha >>
+        {{- $cloneSecret := default .gitSecretRef ((.preview).gitSecretRef) }}
+        {{- if $cloneSecret }}
         secretRef:
-          name: gitlab-ssh-credentials-flux-system
+          name: {{ $cloneSecret }}
+        {{- end }}
     - apiVersion: helm.toolkit.fluxcd.io/v2
       kind: HelmRelease
       metadata:

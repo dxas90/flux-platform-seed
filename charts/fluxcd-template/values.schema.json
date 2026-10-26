@@ -1,139 +1,194 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "fluxcd-template values",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["controlNamespace", "previewNamespace", "previewTokenSecret", "defaults", "apps"],
-  "properties": {
-    "controlNamespace": {
-      "type": "string",
-      "description": "Namespace where Flux controllers, HelmReleases, and GitRepositories live. Stable app ServiceAccounts live in each target namespace; preview ResourceSet ServiceAccounts live in previewNamespace."
-    },
-    "previewNamespace": {
-      "type": "string",
-      "description": "Namespace where ResourceSetInputProvider and ResourceSet resources live."
-    },
-    "previewTokenSecret": {
-      "type": "string",
-      "description": "Name of the Secret in previewNamespace containing GitLab read_api credentials (keys: username, password)."
-    },
-    "defaults": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["targetRevision", "interval", "retryInterval", "timeout", "install", "upgrade", "preview"],
-      "properties": {
-        "targetRevision": {"type": "string"},
-        "interval": {"type": "string"},
-        "retryInterval": {"type": "string"},
-        "timeout": {"type": "string"},
-        "install": {
-          "type": "object",
-          "properties": {
-            "remediation": {
-              "type": "object",
-              "properties": {"retries": {"type": "integer"}}
-            }
-          }
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "fluxcd-template values",
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+        "controlNamespace",
+        "previewNamespace",
+        "previewTokenSecret",
+        "defaults",
+        "apps"
+    ],
+    "properties": {
+        "controlNamespace": {
+            "type": "string",
+            "description": "Namespace where Flux controllers, HelmReleases, and GitRepositories live. Stable app ServiceAccounts live in each target namespace; preview ResourceSet ServiceAccounts live in previewNamespace."
         },
-        "upgrade": {
-          "type": "object",
-          "properties": {
-            "remediation": {
-              "type": "object",
-              "properties": {"retries": {"type": "integer"}}
-            }
-          }
+        "previewNamespace": {
+            "type": "string",
+            "description": "Namespace where ResourceSetInputProvider and ResourceSet resources live."
         },
-        "preview": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["requeueAfterSeconds", "sourceInterval", "filterLabel"],
-          "properties": {
-            "requeueAfterSeconds": {"type": "integer"},
-            "sourceInterval": {"type": "string"},
-            "filterLabel": {"type": "string"}
-          }
-        }
-      }
-    },
-    "apps": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": true,
-        "required": ["name", "repo", "chart", "registry"],
-        "properties": {
-          "name": {
+        "previewTokenSecret": {
             "type": "string",
-            "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
-            "description": "Lowercase DNS-safe app name. Becomes namespace name."
-          },
-          "repo": {
-            "type": "string",
-            "pattern": "^https?://",
-            "description": "Full HTTPS URL of the application repository."
-          },
-          "chart": {
-            "type": "string",
-            "description": "Path to the Helm chart inside the repository."
-          },
-          "registry": {
-            "type": "string",
-            "description": "Container image registry path without tag."
-          },
-          "targetRevision": {
-            "type": "string",
-            "description": "Override default git branch/tag/SHA."
-          },
-          "interval": {
-            "type": "string",
-            "description": "Override default reconcile interval."
-          },
-          "gitSecretRef": {
-            "type": "string",
-            "description": "Name of Secret in controlNamespace for Git clone auth."
-          },
-          "extraValues": {
+            "description": "Name of the Secret in previewNamespace containing GitLab read_api credentials (keys: username, password)."
+        },
+        "defaults": {
             "type": "object",
-            "description": "Additional Helm values merged into the HelmRelease."
-          },
-          "valuesFrom": {
-            "type": "array",
-            "description": "Flux valuesFrom sources for the HelmRelease."
-          },
-          "networkPolicy": {
-            "type": "object",
+            "additionalProperties": false,
+            "required": [
+                "targetRevision",
+                "interval",
+                "retryInterval",
+                "timeout",
+                "install",
+                "upgrade",
+                "preview"
+            ],
             "properties": {
-              "allowIngress": {"type": "boolean"},
-              "ingressNamespace": {"type": "string"}
-            }
-          },
-          "preview": {
-            "type": "object",
-            "properties": {
-              "enabled": {"type": "boolean"},
-              "domain": {
-                "type": "string",
-                "description": "Base domain for preview ingress hosts. Default: preview.example.com"
-              },
-              "tokenSecret": {
-                "type": "string",
-                "description": "Override the default previewTokenSecret for this app."
-              },
-              "gitlab": {
-                "type": "object",
-                "description": "Enables GitLab MR preview via ResourceSetInputProvider.",
-                "properties": {
-                  "url": {
-                    "type": "string",
-                    "description": "Self-hosted GitLab base URL. Omit for gitlab.com."
-                  }
+                "targetRevision": {
+                    "type": "string"
+                },
+                "interval": {
+                    "type": "string"
+                },
+                "retryInterval": {
+                    "type": "string"
+                },
+                "timeout": {
+                    "type": "string"
+                },
+                "install": {
+                    "type": "object",
+                    "properties": {
+                        "remediation": {
+                            "type": "object",
+                            "properties": {
+                                "retries": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "upgrade": {
+                    "type": "object",
+                    "properties": {
+                        "remediation": {
+                            "type": "object",
+                            "properties": {
+                                "retries": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "preview": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                        "requeueAfterSeconds",
+                        "sourceInterval",
+                        "filterLabel"
+                    ],
+                    "properties": {
+                        "requeueAfterSeconds": {
+                            "type": "integer"
+                        },
+                        "sourceInterval": {
+                            "type": "string"
+                        },
+                        "filterLabel": {
+                            "type": "string"
+                        }
+                    }
                 }
-              }
             }
-          }
+        },
+        "apps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": true,
+                "required": [
+                    "name",
+                    "repo",
+                    "chart",
+                    "registry"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "pattern": "^[a-z0-9][a-z0-9-]*[a-z0-9]$",
+                        "description": "Lowercase DNS-safe app name. Becomes namespace name."
+                    },
+                    "repo": {
+                        "type": "string",
+                        "pattern": "^https?://",
+                        "description": "Full HTTPS URL of the application repository."
+                    },
+                    "chart": {
+                        "type": "string",
+                        "description": "Path to the Helm chart inside the repository."
+                    },
+                    "registry": {
+                        "type": "string",
+                        "description": "Container image registry path without tag."
+                    },
+                    "targetRevision": {
+                        "type": "string",
+                        "description": "Override default git branch/tag/SHA."
+                    },
+                    "interval": {
+                        "type": "string",
+                        "description": "Override default reconcile interval."
+                    },
+                    "gitSecretRef": {
+                        "type": "string",
+                        "description": "Name of Secret in controlNamespace for Git clone auth."
+                    },
+                    "extraValues": {
+                        "type": "object",
+                        "description": "Additional Helm values merged into the HelmRelease."
+                    },
+                    "valuesFrom": {
+                        "type": "array",
+                        "description": "Flux valuesFrom sources for the HelmRelease."
+                    },
+                    "networkPolicy": {
+                        "type": "object",
+                        "properties": {
+                            "allowIngress": {
+                                "type": "boolean"
+                            },
+                            "ingressNamespace": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "preview": {
+                        "type": "object",
+                        "properties": {
+                            "enabled": {
+                                "type": "boolean"
+                            },
+                            "domain": {
+                                "type": "string",
+                                "description": "Base domain for preview ingress hosts. Default: preview.example.com"
+                            },
+                            "tokenSecret": {
+                                "type": "string",
+                                "description": "Override the default previewTokenSecret for this app."
+                            },
+                            "gitlab": {
+                                "type": "object",
+                                "description": "Enables GitLab MR preview via ResourceSetInputProvider.",
+                                "properties": {
+                                    "url": {
+                                        "type": "string",
+                                        "description": "Self-hosted GitLab base URL. Omit for gitlab.com."
+                                    }
+                                }
+                            },
+                            "gitSecretRef": {
+                                "type": "string",
+                                "description": "Override clone credential Secret name for preview GitRepositories. Falls back to the top-level gitSecretRef. Omit for public repos."
+                            }
+                        }
+                    }
+                }
+            }
         }
-      }
     }
-  }
 }

@@ -25,4 +25,10 @@ data:
         requeueAfterSeconds: 600
         sourceInterval: 1h
         filterLabel: deploy/flux-preview
-    apps: []
+    apps:
+      - name: network-stats
+        repo: https://gitlab.com/dxas90/network-stats.git
+        chart: k8s/network-stats
+        registry: registry.gitlab.com/dxas90/network-stats
+        preview:
+          gitlab: {}
