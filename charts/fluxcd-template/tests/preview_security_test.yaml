@@ -67,3 +67,39 @@ tests:
       - equal:
           path: subjects[0].namespace
           value: flux-previews
+
+  - it: per-MR Role includes policy group for PodDisruptionBudget
+    templates:
+      - templates/preview-resourceset.yaml
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            gitlab: {}
+    documentIndex: 0
+    asserts:
+      - contains:
+          path: spec.resources
+          content:
+            apiVersion: rbac.authorization.k8s.io/v1
+            kind: Role
+          any: true
+      - matchSnapshot: {}
+
+  - it: per-MR Role includes gateway.networking.k8s.io for HTTPRoute
+    templates:
+      - templates/preview-resourceset.yaml
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            gitlab: {}
+    documentIndex: 0
+    asserts:
+      - matchSnapshot: {}

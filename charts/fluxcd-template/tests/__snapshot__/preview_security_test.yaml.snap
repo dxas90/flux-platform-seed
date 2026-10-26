@@ -1,0 +1,428 @@
+per-MR Role includes gateway.networking.k8s.io for HTTPRoute:
+  1: |
+    apiVersion: fluxcd.controlplane.io/v1
+    kind: ResourceSet
+    metadata:
+      labels:
+        app.kubernetes.io/component: preview
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: my-app
+      name: my-app-preview
+      namespace: flux-previews
+    spec:
+      inputsFrom:
+        - apiVersion: fluxcd.controlplane.io/v1
+          kind: ResourceSetInputProvider
+          name: my-app-mr-provider
+      resources:
+        - apiVersion: v1
+          kind: Namespace
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: ResourceSet
+              app.kubernetes.io/part-of: my-app
+              pod-security.kubernetes.io/audit: restricted
+              pod-security.kubernetes.io/enforce: restricted
+              pod-security.kubernetes.io/warn: restricted
+            name: my-app-<< inputs.id >>
+        - apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: ResourceSet
+              app.kubernetes.io/part-of: my-app
+            name: helm-preview-my-app
+            namespace: my-app-<< inputs.id >>
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: Role
+          metadata:
+            name: helm-preview-my-app
+            namespace: my-app-<< inputs.id >>
+          rules:
+            - apiGroups:
+                - ""
+              resources:
+                - configmaps
+                - secrets
+                - services
+                - persistentvolumeclaims
+                - pods
+                - serviceaccounts
+                - endpoints
+                - events
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - apps
+              resources:
+                - deployments
+                - statefulsets
+                - daemonsets
+                - replicasets
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - batch
+              resources:
+                - jobs
+                - cronjobs
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - autoscaling
+              resources:
+                - horizontalpodautoscalers
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - policy
+              resources:
+                - poddisruptionbudgets
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - networking.k8s.io
+              resources:
+                - ingresses
+                - networkpolicies
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - gateway.networking.k8s.io
+              resources:
+                - httproutes
+                - grpcroutes
+                - tcproutes
+                - tlsroutes
+                - referencegrants
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: RoleBinding
+          metadata:
+            name: helm-preview-my-app
+            namespace: my-app-<< inputs.id >>
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+            name: helm-preview-my-app
+          subjects:
+            - kind: ServiceAccount
+              name: helm-preview-my-app
+              namespace: my-app-<< inputs.id >>
+        - apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          metadata:
+            labels:
+              app.kubernetes.io/component: preview
+              app.kubernetes.io/part-of: my-app
+              preview/branch: << inputs.branch >>
+              preview/mr-id: << inputs.id >>
+            name: my-app-<< inputs.id >>
+            namespace: flux-system
+          spec:
+            interval: 1h
+            ref:
+              commit: << inputs.sha >>
+            url: https://gitlab.com/org/my-app.git
+        - apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            annotations:
+              event.toolkit.fluxcd.io/author: << inputs.author | quote >>
+              event.toolkit.fluxcd.io/branch: << inputs.branch | quote >>
+              event.toolkit.fluxcd.io/change_request: << inputs.id | quote >>
+              event.toolkit.fluxcd.io/commit: << inputs.sha | quote >>
+              event.toolkit.fluxcd.io/title: << inputs.title | quote >>
+            labels:
+              app.kubernetes.io/component: preview
+              app.kubernetes.io/part-of: my-app
+              preview/mr-id: << inputs.id >>
+            name: my-app-<< inputs.id >>
+            namespace: my-app-<< inputs.id >>
+          spec:
+            chart:
+              spec:
+                chart: << inputs.chart >>
+                reconcileStrategy: Revision
+                sourceRef:
+                  kind: GitRepository
+                  name: my-app-<< inputs.id >>
+                  namespace: flux-system
+            install:
+              remediation:
+                retries: 2
+            interval: 10m
+            releaseName: my-app-<< inputs.id >>
+            serviceAccountName: helm-preview-my-app
+            storageNamespace: my-app-<< inputs.id >>
+            targetNamespace: my-app-<< inputs.id >>
+            timeout: 5m
+            upgrade:
+              remediation:
+                retries: 2
+            values:
+              image:
+                repository: registry.gitlab.com/org/my-app
+                tag: << inputs.sha >>
+              ingress:
+                enabled: true
+                hosts:
+                  - host: my-app-<< inputs.id >>.preview.example.com
+      serviceAccountName: preview-my-app
+per-MR Role includes policy group for PodDisruptionBudget:
+  1: |
+    apiVersion: fluxcd.controlplane.io/v1
+    kind: ResourceSet
+    metadata:
+      labels:
+        app.kubernetes.io/component: preview
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: my-app
+      name: my-app-preview
+      namespace: flux-previews
+    spec:
+      inputsFrom:
+        - apiVersion: fluxcd.controlplane.io/v1
+          kind: ResourceSetInputProvider
+          name: my-app-mr-provider
+      resources:
+        - apiVersion: v1
+          kind: Namespace
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: ResourceSet
+              app.kubernetes.io/part-of: my-app
+              pod-security.kubernetes.io/audit: restricted
+              pod-security.kubernetes.io/enforce: restricted
+              pod-security.kubernetes.io/warn: restricted
+            name: my-app-<< inputs.id >>
+        - apiVersion: v1
+          kind: ServiceAccount
+          metadata:
+            labels:
+              app.kubernetes.io/managed-by: ResourceSet
+              app.kubernetes.io/part-of: my-app
+            name: helm-preview-my-app
+            namespace: my-app-<< inputs.id >>
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: Role
+          metadata:
+            name: helm-preview-my-app
+            namespace: my-app-<< inputs.id >>
+          rules:
+            - apiGroups:
+                - ""
+              resources:
+                - configmaps
+                - secrets
+                - services
+                - persistentvolumeclaims
+                - pods
+                - serviceaccounts
+                - endpoints
+                - events
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - apps
+              resources:
+                - deployments
+                - statefulsets
+                - daemonsets
+                - replicasets
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - batch
+              resources:
+                - jobs
+                - cronjobs
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - autoscaling
+              resources:
+                - horizontalpodautoscalers
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - policy
+              resources:
+                - poddisruptionbudgets
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - networking.k8s.io
+              resources:
+                - ingresses
+                - networkpolicies
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+            - apiGroups:
+                - gateway.networking.k8s.io
+              resources:
+                - httproutes
+                - grpcroutes
+                - tcproutes
+                - tlsroutes
+                - referencegrants
+              verbs:
+                - get
+                - list
+                - watch
+                - create
+                - update
+                - patch
+                - delete
+        - apiVersion: rbac.authorization.k8s.io/v1
+          kind: RoleBinding
+          metadata:
+            name: helm-preview-my-app
+            namespace: my-app-<< inputs.id >>
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: Role
+            name: helm-preview-my-app
+          subjects:
+            - kind: ServiceAccount
+              name: helm-preview-my-app
+              namespace: my-app-<< inputs.id >>
+        - apiVersion: source.toolkit.fluxcd.io/v1
+          kind: GitRepository
+          metadata:
+            labels:
+              app.kubernetes.io/component: preview
+              app.kubernetes.io/part-of: my-app
+              preview/branch: << inputs.branch >>
+              preview/mr-id: << inputs.id >>
+            name: my-app-<< inputs.id >>
+            namespace: flux-system
+          spec:
+            interval: 1h
+            ref:
+              commit: << inputs.sha >>
+            url: https://gitlab.com/org/my-app.git
+        - apiVersion: helm.toolkit.fluxcd.io/v2
+          kind: HelmRelease
+          metadata:
+            annotations:
+              event.toolkit.fluxcd.io/author: << inputs.author | quote >>
+              event.toolkit.fluxcd.io/branch: << inputs.branch | quote >>
+              event.toolkit.fluxcd.io/change_request: << inputs.id | quote >>
+              event.toolkit.fluxcd.io/commit: << inputs.sha | quote >>
+              event.toolkit.fluxcd.io/title: << inputs.title | quote >>
+            labels:
+              app.kubernetes.io/component: preview
+              app.kubernetes.io/part-of: my-app
+              preview/mr-id: << inputs.id >>
+            name: my-app-<< inputs.id >>
+            namespace: my-app-<< inputs.id >>
+          spec:
+            chart:
+              spec:
+                chart: << inputs.chart >>
+                reconcileStrategy: Revision
+                sourceRef:
+                  kind: GitRepository
+                  name: my-app-<< inputs.id >>
+                  namespace: flux-system
+            install:
+              remediation:
+                retries: 2
+            interval: 10m
+            releaseName: my-app-<< inputs.id >>
+            serviceAccountName: helm-preview-my-app
+            storageNamespace: my-app-<< inputs.id >>
+            targetNamespace: my-app-<< inputs.id >>
+            timeout: 5m
+            upgrade:
+              remediation:
+                retries: 2
+            values:
+              image:
+                repository: registry.gitlab.com/org/my-app
+                tag: << inputs.sha >>
+              ingress:
+                enabled: true
+                hosts:
+                  - host: my-app-<< inputs.id >>.preview.example.com
+      serviceAccountName: preview-my-app

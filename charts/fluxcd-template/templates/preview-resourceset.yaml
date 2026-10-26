@@ -48,7 +48,8 @@ spec:
         namespace: {{ $previewNS }}
       rules:
         - apiGroups: [""]
-          resources: [configmaps, secrets, services, persistentvolumeclaims, pods]
+          resources: [configmaps, secrets, services, persistentvolumeclaims, pods,
+                      serviceaccounts, endpoints, events]
           verbs: [get, list, watch, create, update, patch, delete]
         - apiGroups: [apps]
           resources: [deployments, statefulsets, daemonsets, replicasets]
@@ -59,8 +60,14 @@ spec:
         - apiGroups: [autoscaling]
           resources: [horizontalpodautoscalers]
           verbs: [get, list, watch, create, update, patch, delete]
+        - apiGroups: [policy]
+          resources: [poddisruptionbudgets]
+          verbs: [get, list, watch, create, update, patch, delete]
         - apiGroups: [networking.k8s.io]
           resources: [ingresses, networkpolicies]
+          verbs: [get, list, watch, create, update, patch, delete]
+        - apiGroups: [gateway.networking.k8s.io]
+          resources: [httproutes, grpcroutes, tcproutes, tlsroutes, referencegrants]
           verbs: [get, list, watch, create, update, patch, delete]
     - apiVersion: rbac.authorization.k8s.io/v1
       kind: RoleBinding
