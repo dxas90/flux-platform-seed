@@ -30,5 +30,5 @@ spec:
     - { group: policy,              kind: PodDisruptionBudget }
     - { group: networking.k8s.io,   kind: Ingress }
     - { group: networking.k8s.io,   kind: NetworkPolicy }
-    - { group: networking.x-k8s.io, kind: HTTPRoute }
+    - { group: gateway.networking.k8s.io, kind: HTTPRoute }
 {{- end }}

@@ -1,0 +1,22 @@
+apiVersion: v2
+name: fluxcd-template
+description: >
+  Platform application catalog. Generates per-app: a locked-down Namespace,
+  default-deny NetworkPolicy, target-namespace ServiceAccount + scoped Role +
+  RoleBinding, GitRepository and HelmRelease (source and release in
+  flux-system for credential isolation). Optionally generates a
+  ResourceSetInputProvider and ResourceSet for GitLab MR preview environments
+  via Flux Operator.
+  No ArgoCD resources are generated.
+type: application
+version: 0.2.0
+keywords:
+  - fluxcd
+  - flux-operator
+  - gitops
+  - platform
+  - preview
+home: https://fluxoperator.dev/
+maintainers:
+  - name: platform-maintainers
+dependencies: []

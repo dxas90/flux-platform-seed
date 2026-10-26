@@ -1,10 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "app-template values",
+  "title": "argocd-template values",
   "type": "object",
+  "required": ["tokens", "defaults", "apps"],
   "properties": {
     "tokens": {
       "type": "object",
+      "required": ["github", "gitlab"],
       "properties": {
         "github": { "$ref": "#/definitions/tokenRef" },
         "gitlab": { "$ref": "#/definitions/tokenRef" }
@@ -13,13 +15,28 @@
     "defaults": {
       "type": "object",
       "properties": {
-        "targetRevision": { "type": "string" },
-        "syncOptions": { "type": "array", "items": { "type": "string" } },
+        "targetRevision": {
+          "type": "string",
+          "default": "main"
+        },
+        "syncOptions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": ["CreateNamespace=true", "ServerSideApply=true", "FailOnSharedResource=true"]
+        },
         "preview": {
           "type": "object",
           "properties": {
-            "requeueAfterSeconds": { "type": "integer", "minimum": 60 },
-            "labels": { "type": "array", "items": { "type": "string" } }
+            "requeueAfterSeconds": {
+              "type": "integer",
+              "minimum": 60,
+              "default": 600
+            },
+            "labels": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": ["preview"]
+            }
           }
         }
       }
@@ -33,9 +50,16 @@
     "tokenRef": {
       "type": "object",
       "required": ["secretName", "key"],
+      "additionalProperties": false,
       "properties": {
-        "secretName": { "type": "string" },
-        "key": { "type": "string" }
+        "secretName": {
+          "type": "string",
+          "description": "Kubernetes secret name in the argocd namespace"
+        },
+        "key": {
+          "type": "string",
+          "description": "Secret data key"
+        }
       }
     },
     "app": {
@@ -70,8 +94,9 @@
           "items": {
             "type": "object",
             "required": ["name", "value"],
+            "additionalProperties": false,
             "properties": {
-              "name":  { "type": "string" },
+              "name": { "type": "string" },
               "value": { "type": "string" }
             }
           },
@@ -80,6 +105,7 @@
         "preview": {
           "type": "object",
           "description": "Preview environment config. Omit to disable previews for this app.",
+          "additionalProperties": false,
           "properties": {
             "enabled": {
               "type": "boolean",
@@ -92,25 +118,27 @@
             "github": {
               "type": "object",
               "description": "GitHub PR preview. Owner/repo are extracted from the repo URL automatically.",
+              "additionalProperties": false,
               "properties": {
                 "enabled": { "type": "boolean" }
               }
             },
             "gitlab": {
               "type": "object",
+              "description": "GitLab MR preview. Requires project ID.",
               "required": ["projectId"],
-              "description": "GitLab MR preview. Works with gitlab.com and self-hosted instances.",
+              "additionalProperties": false,
               "properties": {
                 "projectId": {
-                  "type": "string",
-                  "pattern": "^[0-9]+$",
-                  "description": "Numeric project ID from GitLab Settings > General (e.g. \"30270366\")"
+                  "type": ["string", "integer"],
+                  "description": "GitLab project ID or URL-encoded project path"
                 },
                 "url": {
                   "type": "string",
                   "format": "uri",
-                  "description": "Base URL of your GitLab instance. Omit for gitlab.com."
-                }
+                  "description": "GitLab instance URL for self-hosted (optional, defaults to gitlab.com)"
+                },
+                "enabled": { "type": "boolean" }
               }
             }
           }

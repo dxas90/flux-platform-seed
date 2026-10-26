@@ -36,11 +36,13 @@ flux-operator
     └── GitRepository/flux-system + Kustomization/flux-system
         ├── infra-controllers  → namespaces, CRDs, Helm repositories and releases
         └── infra-configs      → resources that require those controllers/CRDs
-                                 └── platform-apps (ArgoCD Application)
-                                       └── renders charts/app-template + catalog.yaml
-                                             ├── AppProject/<name>
-                                             ├── Application/<name>        (stable)
-                                             └── ApplicationSet/<name>-preview  (opt-in)
+        └── application delivery
+            ├── ArgoCD platform Application → charts/argocd-template
+            │   ├── AppProject + Application
+            │   └── ApplicationSet (optional GitHub/GitLab previews)
+            └── Flux HelmRelease → charts/fluxcd-template
+                ├── hardened stable app resources
+                └── ResourceSetInputProvider + ResourceSet (optional GitLab MR previews)
 ```
 
 The operator creates and owns the Flux controllers. `FluxInstance` configures the distribution and points Flux at one cluster directory in this repository. The cluster entrypoint creates two ordered Flux Kustomizations:
@@ -58,7 +60,8 @@ clusters/
   staging/                      # Staging cluster entrypoint
   prod/                         # Production cluster entrypoint
 charts/
-  app-template/                 # Helm chart — generates ArgoCD resources from catalog.yaml
+  argocd-template/              # ArgoCD application catalog chart
+  fluxcd-template/               # Flux application catalog and GitLab MR previews
     catalog.yaml                # ← THE ONE FILE teams edit to register apps
 infrastructure/
   controllers/
@@ -265,20 +268,25 @@ The script creates an Opaque Secret with the `identity` and `known_hosts` keys e
 
 ## Application delivery
 
-Applications are registered in [`charts/app-template/catalog.yaml`](charts/app-template/catalog.yaml). Add one entry and open a PR — ArgoCD creates the `AppProject`, `Application`, and (opt-in) preview `ApplicationSet` automatically.
+Choose one controller per application. Do not register the same workload in both catalogs.
+
+For ArgoCD, edit `charts/argocd-template/catalog.yaml`:
 
 ```yaml
-# charts/app-template/catalog.yaml
 apps:
-  - name: my-service
-    repo: https://github.com/my-org/my-service.git
-    chart: k8s/chart
-    registry: ghcr.io/my-org/my-service
+  - name: example-api
+    repo: https://git.example.invalid/org/example-api.git
+    chart: deploy/chart
+    registry: registry.example.invalid/org/example-api
 ```
 
-See [Application onboarding](docs/application-onboarding.md) and [`charts/app-template/README.md`](charts/app-template/README.md) for the full guide including preview environments (GitHub PRs, GitLab MRs, self-hosted GitLab).
+The ArgoCD platform Application renders the chart and creates an AppProject, stable Application, and optional ApplicationSet preview resources.
 
-The `examples/onboarding/` directory shows the manual AppProject/Application pattern for teams that need finer control than the catalog provides.
+For Flux, edit `charts/fluxcd-template/catalog.yaml` using the same application fields. The Flux catalog HelmRelease renders the chart and creates a hardened stable deployment. Add `preview.gitlab: {}` only for trusted GitLab repositories to enable ResourceSetInputProvider + ResourceSet merge-request previews. GitHub PR previews are provided by the ArgoCD chart, not the Flux chart.
+
+See [Application onboarding](docs/application-onboarding.md) and the chart READMEs for controller-specific fields, credentials, trust boundaries, and validation commands.
+
+The `examples/onboarding/` directory shows the manual ArgoCD resource pattern for teams that need finer control than the catalog provides.
 
 ## Source composition
 

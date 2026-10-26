@@ -8,7 +8,7 @@
 #
 # Secret prereqs (argocd namespace, created out-of-band):
 #
-#   # 1. For the ApplicationSet PR generator (already in apps/network-stats/):
+#   # 1. For the ApplicationSet PR generator (already in apps/example-service/):
 #   kubectl -n argocd create secret generic gitlab-token \
 #     --from-literal=token=<YOUR_GITLAB_PAT>
 #

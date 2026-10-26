@@ -1,0 +1,74 @@
+{{- $prevNS := .Values.previewNamespace }}
+{{- range .Values.apps }}
+{{- if include "fluxcd-template.previewEnabled" (list $ .) }}
+---
+# ResourceSet service account. It must be in the same namespace as the ResourceSet.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: preview-{{ .name }}
+  namespace: {{ $prevNS }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: {{ .name }}
+    app.kubernetes.io/component: preview
+---
+# The ResourceSet expands trusted MR inputs into namespaces, RBAC, GitRepositories
+# and HelmReleases. This role is intentionally explicit but cluster-wide because
+# MR IDs create namespaces dynamically. It is suitable only for trusted, reviewed
+# GitLab projects; labels are not a hostile-code sandbox.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: preview-{{ .name }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: {{ .name }}
+    app.kubernetes.io/component: preview
+rules:
+  - apiGroups: [""]
+    resources: [namespaces, serviceaccounts, configmaps, secrets, services, persistentvolumeclaims, pods]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, daemonsets, replicasets]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [policy]
+    resources: [poddisruptionbudgets]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses, networkpolicies]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [roles, rolebindings]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [source.toolkit.fluxcd.io]
+    resources: [gitrepositories]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [helm.toolkit.fluxcd.io]
+    resources: [helmreleases]
+    verbs: [get, list, watch, create, update, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: preview-{{ .name }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: {{ .name }}
+    app.kubernetes.io/component: preview
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: preview-{{ .name }}
+subjects:
+  - kind: ServiceAccount
+    name: preview-{{ .name }}
+    namespace: {{ $prevNS }}
+{{- end }}
+{{- end }}

@@ -3,23 +3,28 @@ matches snapshot:
     apiVersion: argoproj.io/v1alpha1
     kind: Application
     metadata:
-      name: learn-go
+      name: example-api
       namespace: argocd
     spec:
       destination:
-        namespace: learn-go
+        namespace: example-api
         server: https://kubernetes.default.svc
-      project: learn-go
+      ignoreDifferences:
+        - group: apiextensions.k8s.io
+          jsonPointers:
+            - /spec/preserveUnknownFields
+          kind: CustomResourceDefinition
+      project: example-api
       source:
         helm:
           parameters:
             - name: image.repository
-              value: ghcr.io/dxas90/learn-go
+              value: ghcr.io/example-org/example-api
             - name: env.variables.APP_ENV
               value: production
-          releaseName: learn-go
+          releaseName: example-api
         path: k8s/chart
-        repoURL: https://github.com/dxas90/learn-go.git
+        repoURL: https://github.com/example-org/example-api.git
         targetRevision: main
       syncPolicy:
         automated:

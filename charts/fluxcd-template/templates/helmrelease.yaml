@@ -1,0 +1,44 @@
+{{- $ctrl := .Values.controlNamespace }}
+{{- $defaults := .Values.defaults }}
+{{- range .Values.apps }}
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: {{ .name }}
+  namespace: {{ $ctrl }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: {{ .name }}
+spec:
+  serviceAccountName: app-{{ .name }}
+  targetNamespace: {{ .name }}
+  storageNamespace: {{ $ctrl }}
+  releaseName: {{ .name }}
+  interval: {{ default $defaults.interval .interval }}
+  timeout: {{ $defaults.timeout }}
+  chart:
+    spec:
+      chart: {{ .chart }}
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: {{ .name }}
+        namespace: {{ $ctrl }}
+  install:
+    remediation:
+      retries: {{ $defaults.install.remediation.retries }}
+  upgrade:
+    remediation:
+      retries: {{ $defaults.upgrade.remediation.retries }}
+  values:
+    image:
+      repository: {{ .registry }}
+    {{- if .extraValues }}
+    {{- toYaml .extraValues | nindent 4 }}
+    {{- end }}
+  {{- if .valuesFrom }}
+  valuesFrom:
+    {{- toYaml .valuesFrom | nindent 4 }}
+  {{- end }}
+{{- end }}

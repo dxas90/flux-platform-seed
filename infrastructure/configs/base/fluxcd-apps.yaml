@@ -1,0 +1,34 @@
+# Flux-native application catalog.
+# The source repository is the FluxInstance GitRepository named flux-system.
+# Keep this release separate from the ArgoCD catalog so one controller owns each
+# application workload.
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: fluxcd-application-catalog
+  namespace: flux-system
+spec:
+  interval: 10m
+  retryInterval: 2m
+  timeout: 5m
+  chart:
+    spec:
+      chart: ./charts/fluxcd-template
+      reconcileStrategy: Revision
+      sourceRef:
+        kind: GitRepository
+        name: flux-system
+        namespace: flux-system
+      valuesFiles:
+        - ./charts/fluxcd-template/values.yaml
+        - ./charts/fluxcd-template/catalog.yaml
+  valuesFrom:
+    - kind: ConfigMap
+      name: fluxcd-application-catalog-values
+      valuesKey: values.yaml
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3

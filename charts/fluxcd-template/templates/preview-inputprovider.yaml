@@ -1,0 +1,36 @@
+{{- $ctrl := .Values.controlNamespace }}
+{{- $prevNS := .Values.previewNamespace }}
+{{- $tokenSecret := .Values.previewTokenSecret }}
+{{- $defaults := .Values.defaults }}
+{{- range .Values.apps }}
+{{- if include "fluxcd-template.previewEnabled" (list $ .) }}
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSetInputProvider
+metadata:
+  name: {{ .name }}-mr-provider
+  namespace: {{ $prevNS }}
+  annotations:
+    fluxcd.controlplane.io/reconcileEvery: "{{ $defaults.preview.requeueAfterSeconds }}s"
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: {{ .name }}
+    app.kubernetes.io/component: preview
+spec:
+  type: GitLabMergeRequest
+  url: {{ trimSuffix ".git" .repo }}
+  secretRef:
+    name: {{ default $tokenSecret .preview.tokenSecret }}
+  filter:
+    labels:
+      - {{ $defaults.preview.filterLabel | quote }}
+  defaultValues:
+    chart: {{ .chart | quote }}
+    registry: {{ .registry | quote }}
+    {{- if .extraValues }}
+    {{- range $k, $v := .extraValues }}
+    {{ $k }}: {{ $v | quote }}
+    {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}

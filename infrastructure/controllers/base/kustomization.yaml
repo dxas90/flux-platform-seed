@@ -16,7 +16,7 @@ resources:
   - fluent-bit.yaml
   - alloy.yaml
   - tempo.yaml
-  - argocd.yaml
+  # - argocd.yaml
   # Uncomment to enable a catalog addon in both environments.
   # - external-dns.yaml
   # - kyverno.yaml

@@ -1,19 +1,19 @@
 {{/*
 Extract the GitHub owner from a full HTTPS clone URL.
-Input:  "https://github.com/dxas90/learn-go.git"
-Output: "dxas90"
+Input:  "https://github.com/org/app.git"
+Output: "org"
 */}}
-{{- define "app-template.githubOwner" -}}
+{{- define "argocd-template.githubOwner" -}}
 {{- $path := trimSuffix ".git" (trimPrefix "https://github.com/" .) -}}
 {{- index (splitList "/" $path) 0 -}}
 {{- end }}
 
 {{/*
 Extract the GitHub repository name from a full HTTPS clone URL.
-Input:  "https://github.com/dxas90/learn-go.git"
-Output: "learn-go"
+Input:  "https://github.com/org/app.git"
+Output: "app"
 */}}
-{{- define "app-template.githubRepo" -}}
+{{- define "argocd-template.githubRepo" -}}
 {{- $path := trimSuffix ".git" (trimPrefix "https://github.com/" .) -}}
 {{- index (splitList "/" $path) 1 -}}
 {{- end }}
@@ -21,7 +21,7 @@ Output: "learn-go"
 {{/*
 Return a literal "{{" — used to embed ArgoCD go-template variables inside
 Helm templates without triggering Helm's own template engine.
-Usage: {{ include "lb" . }}.number{{ include "rb" . }}
+Usage: {{ include "argocd-template.lb" . }}.number{{ include "argocd-template.rb" . }}
 */}}
-{{- define "lb" -}}{{- "{{" -}}{{- end }}
-{{- define "rb" -}}{{- "}}" -}}{{- end }}
+{{- define "argocd-template.lb" -}}{{- "{{" -}}{{- end }}
+{{- define "argocd-template.rb" -}}{{- "}}" -}}{{- end }}

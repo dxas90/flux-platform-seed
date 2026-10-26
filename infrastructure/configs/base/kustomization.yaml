@@ -4,6 +4,8 @@ resources:
   - default-project.yaml
   - platform-project.yaml
   - platform-apps.yaml
+  - fluxcd-application-catalog-values.yaml
+  - fluxcd-apps.yaml
   - argocd
   - cert-manager
   - grafana

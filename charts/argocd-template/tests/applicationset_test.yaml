@@ -69,33 +69,33 @@ tests:
   - it: names the ApplicationSet "<app>-preview"
     set:
       apps:
-        - name: learn-go
-          repo: https://github.com/dxas90/learn-go.git
+        - name: example-api
+          repo: https://github.com/example-org/example-api.git
           chart: k8s/chart
-          registry: ghcr.io/dxas90/learn-go
+          registry: ghcr.io/example-org/example-api
           preview:
             github: {}
     asserts:
       - equal:
           path: metadata.name
-          value: learn-go-preview
+          value: example-api-preview
 
   - it: uses GitHub generator with owner and repo extracted from URL
     set:
       apps:
-        - name: learn-go
-          repo: https://github.com/dxas90/learn-go.git
+        - name: example-api
+          repo: https://github.com/example-org/example-api.git
           chart: k8s/chart
-          registry: ghcr.io/dxas90/learn-go
+          registry: ghcr.io/example-org/example-api
           preview:
             github: {}
     asserts:
       - equal:
           path: spec.generators[0].pullRequest.github.owner
-          value: dxas90
+          value: example-org
       - equal:
           path: spec.generators[0].pullRequest.github.repo
-          value: learn-go
+          value: example-api
 
   - it: uses the github-token secret for GitHub
     set:
@@ -117,10 +117,10 @@ tests:
   - it: uses GitLab generator when preview.gitlab is set
     set:
       apps:
-        - name: network-stats
-          repo: https://gitlab.com/dxas90/network-stats.git
-          chart: k8s/network-stats
-          registry: registry.gitlab.com/dxas90/network-stats
+        - name: example-service
+          repo: https://gitlab.com/example-org/example-service.git
+          chart: k8s/example-service
+          registry: registry.gitlab.com/example-org/example-service
           preview:
             gitlab:
               projectId: "30270366"
@@ -133,10 +133,10 @@ tests:
   - it: sets projectId for GitLab generator
     set:
       apps:
-        - name: network-stats
-          repo: https://gitlab.com/dxas90/network-stats.git
-          chart: k8s/network-stats
-          registry: registry.gitlab.com/dxas90/network-stats
+        - name: example-service
+          repo: https://gitlab.com/example-org/example-service.git
+          chart: k8s/example-service
+          registry: registry.gitlab.com/example-org/example-service
           preview:
             gitlab:
               projectId: "30270366"
@@ -148,10 +148,10 @@ tests:
   - it: uses the gitlab-token secret for GitLab
     set:
       apps:
-        - name: network-stats
-          repo: https://gitlab.com/dxas90/network-stats.git
-          chart: k8s/network-stats
-          registry: registry.gitlab.com/dxas90/network-stats
+        - name: example-service
+          repo: https://gitlab.com/example-org/example-service.git
+          chart: k8s/example-service
+          registry: registry.gitlab.com/example-org/example-service
           preview:
             gitlab:
               projectId: "30270366"
@@ -179,10 +179,10 @@ tests:
   - it: omits gitlabUrl for gitlab.com (no url field)
     set:
       apps:
-        - name: network-stats
-          repo: https://gitlab.com/dxas90/network-stats.git
-          chart: k8s/network-stats
-          registry: registry.gitlab.com/dxas90/network-stats
+        - name: example-service
+          repo: https://gitlab.com/example-org/example-service.git
+          chart: k8s/example-service
+          registry: registry.gitlab.com/example-org/example-service
           preview:
             gitlab:
               projectId: "30270366"
@@ -280,10 +280,10 @@ tests:
   - it: matches snapshot for GitHub preview
     set:
       apps:
-        - name: learn-go
-          repo: https://github.com/dxas90/learn-go.git
+        - name: example-api
+          repo: https://github.com/example-org/example-api.git
           chart: k8s/chart
-          registry: ghcr.io/dxas90/learn-go
+          registry: ghcr.io/example-org/example-api
           preview:
             github: {}
     asserts:
@@ -292,10 +292,10 @@ tests:
   - it: matches snapshot for GitLab preview
     set:
       apps:
-        - name: network-stats
-          repo: https://gitlab.com/dxas90/network-stats.git
-          chart: k8s/network-stats
-          registry: registry.gitlab.com/dxas90/network-stats
+        - name: example-service
+          repo: https://gitlab.com/example-org/example-service.git
+          chart: k8s/example-service
+          registry: registry.gitlab.com/example-org/example-service
           preview:
             gitlab:
               projectId: "30270366"

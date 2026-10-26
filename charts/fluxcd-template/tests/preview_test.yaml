@@ -1,0 +1,161 @@
+suite: Preview ResourceSet and InputProvider generation
+templates:
+  - templates/preview-inputprovider.yaml
+  - templates/preview-resourceset.yaml
+  - templates/preview-rbac.yaml
+
+tests:
+  - it: generates no preview resources when preview block is absent
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/preview-inputprovider.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/preview-resourceset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/preview-rbac.yaml
+
+  - it: generates no preview resources when preview.enabled is false
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            enabled: false
+            gitlab: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/preview-inputprovider.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/preview-resourceset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/preview-rbac.yaml
+
+  - it: generates no preview resources when only preview.github is set (not supported)
+    set:
+      apps:
+        - name: my-app
+          repo: https://github.com/org/my-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/my-app
+          preview:
+            github: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/preview-inputprovider.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/preview-resourceset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/preview-rbac.yaml
+
+  - it: generates 1 InputProvider, 1 ResourceSet, 5 RBAC docs for one gitlab app
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            gitlab: {}
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/preview-inputprovider.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/preview-resourceset.yaml
+      - hasDocuments:
+          count: 3
+        template: templates/preview-rbac.yaml
+
+  - it: github app generates no preview; gitlab app generates full set
+    set:
+      apps:
+        - name: github-app
+          repo: https://github.com/org/github-app.git
+          chart: k8s/chart
+          registry: ghcr.io/org/github-app
+          preview:
+            github: {}
+        - name: gitlab-app
+          repo: https://gitlab.com/org/gitlab-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/gitlab-app
+          preview:
+            gitlab: {}
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/preview-inputprovider.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/preview-resourceset.yaml
+      - hasDocuments:
+          count: 3
+        template: templates/preview-rbac.yaml
+
+  - it: two gitlab apps generate 2 InputProviders, 2 ResourceSets, 6 RBAC docs
+    set:
+      apps:
+        - name: app-a
+          repo: https://gitlab.com/org/app-a.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/app-a
+          preview:
+            gitlab: {}
+        - name: app-b
+          repo: https://gitlab.com/org/app-b.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/app-b
+          preview:
+            gitlab: {}
+    asserts:
+      - hasDocuments:
+          count: 2
+        template: templates/preview-inputprovider.yaml
+      - hasDocuments:
+          count: 2
+        template: templates/preview-resourceset.yaml
+      - hasDocuments:
+          count: 6
+        template: templates/preview-rbac.yaml
+
+  - it: stable app gets no previews; one preview app gets full set (1+1+3)
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+        - name: preview-app
+          repo: https://gitlab.com/org/preview-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/preview-app
+          preview:
+            gitlab: {}
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/preview-inputprovider.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/preview-resourceset.yaml
+      - hasDocuments:
+          count: 3
+        template: templates/preview-rbac.yaml

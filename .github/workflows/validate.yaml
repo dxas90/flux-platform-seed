@@ -43,7 +43,7 @@ jobs:
       - name: Install helm-unittest plugin
         run: helm plugin install https://github.com/helm-unittest/helm-unittest
       - name: Helm unit tests
-        run: helm unittest charts/app-template
+        run: helm unittest charts/argocd-template charts/fluxcd-template
       - name: Validate YAML, graph and Flux contracts
         run: uv run --with pyyaml==6.0.3 python scripts/validate.py
       - name: Unit tests

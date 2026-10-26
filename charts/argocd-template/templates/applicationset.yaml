@@ -31,8 +31,8 @@ spec:
             {{- end }}
         {{- else }}
         github:
-          owner: {{ include "app-template.githubOwner" .repo }}
-          repo: {{ include "app-template.githubRepo" .repo }}
+          owner: {{ include "argocd-template.githubOwner" .repo }}
+          repo: {{ include "argocd-template.githubRepo" .repo }}
           tokenRef:
             secretName: {{ $vals.Values.tokens.github.secretName }}
             key: {{ $vals.Values.tokens.github.key }}

@@ -3,17 +3,17 @@ matches snapshot:
     apiVersion: argoproj.io/v1alpha1
     kind: AppProject
     metadata:
-      name: learn-go
+      name: example-api
       namespace: argocd
     spec:
       clusterResourceWhitelist:
         - group: ""
           kind: Namespace
-      description: learn-go — https://github.com/dxas90/learn-go.git
+      description: example-api — https://github.com/example-org/example-api.git
       destinations:
-        - namespace: learn-go
+        - namespace: example-api
           server: https://kubernetes.default.svc
-        - namespace: learn-go-preview
+        - namespace: example-api-preview
           server: https://kubernetes.default.svc
       namespaceResourceWhitelist:
         - group: ""
@@ -36,7 +36,7 @@ matches snapshot:
           kind: Ingress
         - group: networking.k8s.io
           kind: NetworkPolicy
-        - group: networking.x-k8s.io
+        - group: gateway.networking.k8s.io
           kind: HTTPRoute
       sourceRepos:
-        - https://github.com/dxas90/learn-go.git
+        - https://github.com/example-org/example-api.git

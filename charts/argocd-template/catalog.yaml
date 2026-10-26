@@ -1,0 +1,4 @@
+# Platform application catalog
+# Add ArgoCD-managed applications here. Flux-managed applications belong in
+# charts/fluxcd-template/catalog.yaml. Do not register one workload in both.
+apps: []

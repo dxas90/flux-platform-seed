@@ -21,16 +21,16 @@ tests:
   - it: sets correct metadata
     set:
       apps:
-        - name: learn-go
-          repo: https://github.com/dxas90/learn-go.git
+        - name: example-api
+          repo: https://github.com/example-org/example-api.git
           chart: k8s/chart
-          registry: ghcr.io/dxas90/learn-go
+          registry: ghcr.io/example-org/example-api
     asserts:
       - isKind:
           of: AppProject
       - equal:
           path: metadata.name
-          value: learn-go
+          value: example-api
       - equal:
           path: metadata.namespace
           value: argocd
@@ -143,10 +143,10 @@ tests:
   - it: matches snapshot
     set:
       apps:
-        - name: learn-go
-          repo: https://github.com/dxas90/learn-go.git
+        - name: example-api
+          repo: https://github.com/example-org/example-api.git
           chart: k8s/chart
-          registry: ghcr.io/dxas90/learn-go
+          registry: ghcr.io/example-org/example-api
           preview:
             github: {}
     asserts:

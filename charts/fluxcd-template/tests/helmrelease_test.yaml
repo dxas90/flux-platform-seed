@@ -1,0 +1,164 @@
+suite: HelmRelease generation (stable app)
+templates:
+  - templates/helmrelease.yaml
+
+tests:
+  - it: generates one HelmRelease per app
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+        - name: other-app
+          repo: https://gitlab.com/org/other-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/other-app
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: HelmRelease lives in controlNamespace
+    set:
+      controlNamespace: flux-system
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: flux-system
+
+  - it: targetNamespace is the app namespace
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.targetNamespace
+          value: my-app
+
+  - it: storageNamespace is controlNamespace (Helm secrets isolated)
+    set:
+      controlNamespace: flux-system
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.storageNamespace
+          value: flux-system
+
+  - it: chart source uses revision reconciliation
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.chart.spec.reconcileStrategy
+          value: Revision
+
+  - it: serviceAccountName is resolved in targetNamespace
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.serviceAccountName
+          value: app-my-app
+
+  - it: chart sourceRef points to the GitRepository in controlNamespace
+    set:
+      controlNamespace: flux-system
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.chart.spec.sourceRef.kind
+          value: GitRepository
+      - equal:
+          path: spec.chart.spec.sourceRef.name
+          value: my-app
+      - equal:
+          path: spec.chart.spec.sourceRef.namespace
+          value: flux-system
+
+  - it: image.repository is set from registry
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.values.image.repository
+          value: registry.gitlab.com/org/my-app
+
+  - it: uses app-level targetRevision override when provided
+    set:
+      defaults:
+        targetRevision: main
+        interval: 10m
+        retryInterval: 2m
+        timeout: 5m
+        install:
+          remediation:
+            retries: 3
+        upgrade:
+          remediation:
+            retries: 3
+        preview:
+          requeueAfterSeconds: 600
+          sourceInterval: 1h
+          filterLabel: "deploy/flux-preview"
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          targetRevision: v2.3.0
+    documentIndex: 0
+    asserts:
+      - matchSnapshot: {}
+
+  - it: merges extraValues into HelmRelease values
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          extraValues:
+            replicaCount: 3
+            resources:
+              limits:
+                cpu: "500m"
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: spec.values.replicaCount
+          value: 3

@@ -1,0 +1,140 @@
+{{- $ctrl := .Values.controlNamespace }}
+{{- $prevNS := .Values.previewNamespace }}
+{{- $tokenSecret := .Values.previewTokenSecret }}
+{{- $defaults := .Values.defaults }}
+{{- range .Values.apps }}
+{{- if include "fluxcd-template.previewEnabled" (list $ .) }}
+{{- $app := . }}
+{{- $previewNS := printf "%s-<< inputs.id >>" .name }}
+---
+apiVersion: fluxcd.controlplane.io/v1
+kind: ResourceSet
+metadata:
+  name: {{ .name }}-preview
+  namespace: {{ $prevNS }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: {{ .name }}
+    app.kubernetes.io/component: preview
+spec:
+  serviceAccountName: preview-{{ .name }}
+  inputsFrom:
+    - apiVersion: fluxcd.controlplane.io/v1
+      kind: ResourceSetInputProvider
+      name: {{ .name }}-mr-provider
+  resources:
+    - apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: {{ $previewNS }}
+        labels:
+          app.kubernetes.io/managed-by: ResourceSet
+          app.kubernetes.io/part-of: {{ .name }}
+          pod-security.kubernetes.io/enforce: restricted
+          pod-security.kubernetes.io/audit: restricted
+          pod-security.kubernetes.io/warn: restricted
+    - apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: helm-preview-{{ .name }}
+        namespace: {{ $previewNS }}
+        labels:
+          app.kubernetes.io/managed-by: ResourceSet
+          app.kubernetes.io/part-of: {{ .name }}
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: Role
+      metadata:
+        name: helm-preview-{{ .name }}
+        namespace: {{ $previewNS }}
+      rules:
+        - apiGroups: [""]
+          resources: [configmaps, secrets, services, persistentvolumeclaims, pods]
+          verbs: [get, list, watch, create, update, patch, delete]
+        - apiGroups: [apps]
+          resources: [deployments, statefulsets, daemonsets, replicasets]
+          verbs: [get, list, watch, create, update, patch, delete]
+        - apiGroups: [batch]
+          resources: [jobs, cronjobs]
+          verbs: [get, list, watch, create, update, patch, delete]
+        - apiGroups: [autoscaling]
+          resources: [horizontalpodautoscalers]
+          verbs: [get, list, watch, create, update, patch, delete]
+        - apiGroups: [networking.k8s.io]
+          resources: [ingresses, networkpolicies]
+          verbs: [get, list, watch, create, update, patch, delete]
+    - apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: helm-preview-{{ .name }}
+        namespace: {{ $previewNS }}
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: Role
+        name: helm-preview-{{ .name }}
+      subjects:
+        - kind: ServiceAccount
+          name: helm-preview-{{ .name }}
+          namespace: {{ $previewNS }}
+    - apiVersion: source.toolkit.fluxcd.io/v1
+      kind: GitRepository
+      metadata:
+        name: {{ .name }}-<< inputs.id >>
+        namespace: {{ $ctrl }}
+        labels:
+          app.kubernetes.io/part-of: {{ .name }}
+          app.kubernetes.io/component: preview
+          preview/mr-id: "<< inputs.id >>"
+          preview/branch: "<< inputs.branch >>"
+      spec:
+        interval: {{ $defaults.preview.sourceInterval }}
+        url: {{ .repo }}
+        ref:
+          commit: << inputs.sha >>
+        secretRef:
+          name: gitlab-ssh-credentials-flux-system
+    - apiVersion: helm.toolkit.fluxcd.io/v2
+      kind: HelmRelease
+      metadata:
+        name: {{ .name }}-<< inputs.id >>
+        namespace: {{ $ctrl }}
+        annotations:
+          event.toolkit.fluxcd.io/change_request: "<< inputs.id | quote >>"
+          event.toolkit.fluxcd.io/commit: "<< inputs.sha | quote >>"
+          event.toolkit.fluxcd.io/branch: "<< inputs.branch | quote >>"
+          event.toolkit.fluxcd.io/author: "<< inputs.author | quote >>"
+          event.toolkit.fluxcd.io/title: "<< inputs.title | quote >>"
+        labels:
+          app.kubernetes.io/part-of: {{ .name }}
+          app.kubernetes.io/component: preview
+          preview/mr-id: "<< inputs.id >>"
+      spec:
+        serviceAccountName: helm-preview-{{ .name }}
+        targetNamespace: {{ $previewNS }}
+        storageNamespace: {{ $ctrl }}
+        releaseName: {{ .name }}-<< inputs.id >>
+        interval: {{ default $defaults.interval .interval }}
+        timeout: {{ $defaults.timeout }}
+        chart:
+          spec:
+            chart: << inputs.chart >>
+            reconcileStrategy: Revision
+            sourceRef:
+              kind: GitRepository
+              name: {{ .name }}-<< inputs.id >>
+              namespace: {{ $ctrl }}
+        install:
+          remediation:
+            retries: 2
+        upgrade:
+          remediation:
+            retries: 2
+        values:
+          image:
+            repository: {{ .registry }}
+            tag: << inputs.sha >>
+          ingress:
+            enabled: true
+            hosts:
+              - host: {{ .name }}-<< inputs.id >>.{{ default "preview.example.com" ((.preview).domain) }}
+{{- end }}
+{{- end }}

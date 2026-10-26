@@ -1,0 +1,22 @@
+{{- $ctrl := .Values.controlNamespace }}
+{{- $defaults := .Values.defaults }}
+{{- range .Values.apps }}
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: {{ .name }}
+  namespace: {{ $ctrl }}
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: {{ .name }}
+spec:
+  interval: {{ default $defaults.interval .interval }}
+  url: {{ .repo }}
+  ref:
+    branch: {{ default $defaults.targetRevision .targetRevision }}
+  {{- if .gitSecretRef }}
+  secretRef:
+    name: {{ .gitSecretRef }}
+  {{- end }}
+{{- end }}

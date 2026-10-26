@@ -1,0 +1,15 @@
+apiVersion: v2
+name: argocd-template
+description: >
+  ArgoCD application catalog. Generates AppProject + Application + preview
+  ApplicationSet for every entry in catalog.yaml. Supports GitHub and GitLab
+  (both gitlab.com and self-hosted). Application delivery via ArgoCD controller.
+type: application
+version: 1.0.0
+keywords:
+  - argocd
+  - gitops
+  - platform
+  - application-delivery
+maintainers:
+  - name: platform-maintainers

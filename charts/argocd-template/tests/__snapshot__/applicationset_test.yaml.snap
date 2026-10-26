@@ -3,7 +3,7 @@ matches snapshot for GitHub preview:
     apiVersion: argoproj.io/v1alpha1
     kind: ApplicationSet
     metadata:
-      name: learn-go-preview
+      name: example-api-preview
       namespace: argocd
     spec:
       generators:
@@ -11,8 +11,8 @@ matches snapshot for GitHub preview:
             github:
               labels:
                 - preview
-              owner: dxas90
-              repo: learn-go
+              owner: example-org
+              repo: example-api
               tokenRef:
                 key: token
                 secretName: github-token
@@ -22,22 +22,22 @@ matches snapshot for GitHub preview:
         - missingkey=error
       template:
         metadata:
-          name: learn-go-preview-{{.number}}-{{.branch_slug}}
+          name: example-api-preview-{{.number}}-{{.branch_slug}}
         spec:
           destination:
-            namespace: learn-go-preview
+            namespace: example-api-preview
             server: https://kubernetes.default.svc
-          project: learn-go
+          project: example-api
           source:
             helm:
               parameters:
                 - name: image.repository
-                  value: ghcr.io/dxas90/learn-go
+                  value: ghcr.io/example-org/example-api
                 - name: image.tag
                   value: '{{.head_sha}}'
-              releaseName: learn-go-preview-{{.number}}
+              releaseName: example-api-preview-{{.number}}
             path: k8s/chart
-            repoURL: https://github.com/dxas90/learn-go.git
+            repoURL: https://github.com/example-org/example-api.git
             targetRevision: '{{.head_sha}}'
           syncPolicy:
             automated:
@@ -52,7 +52,7 @@ matches snapshot for GitLab preview:
     apiVersion: argoproj.io/v1alpha1
     kind: ApplicationSet
     metadata:
-      name: network-stats-preview
+      name: example-service-preview
       namespace: argocd
     spec:
       generators:
@@ -70,22 +70,22 @@ matches snapshot for GitLab preview:
         - missingkey=error
       template:
         metadata:
-          name: network-stats-preview-{{.number}}-{{.branch_slug}}
+          name: example-service-preview-{{.number}}-{{.branch_slug}}
         spec:
           destination:
-            namespace: network-stats-preview
+            namespace: example-service-preview
             server: https://kubernetes.default.svc
-          project: network-stats
+          project: example-service
           source:
             helm:
               parameters:
                 - name: image.repository
-                  value: registry.gitlab.com/dxas90/network-stats
+                  value: registry.gitlab.com/example-org/example-service
                 - name: image.tag
                   value: '{{.head_sha}}'
-              releaseName: network-stats-preview-{{.number}}
-            path: k8s/network-stats
-            repoURL: https://gitlab.com/dxas90/network-stats.git
+              releaseName: example-service-preview-{{.number}}
+            path: k8s/example-service
+            repoURL: https://gitlab.com/example-org/example-service.git
             targetRevision: '{{.head_sha}}'
           syncPolicy:
             automated:

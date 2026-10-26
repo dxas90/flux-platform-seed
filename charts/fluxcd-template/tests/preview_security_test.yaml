@@ -1,0 +1,69 @@
+suite: Preview security model enforcement
+
+tests:
+  - it: ResourceSet service account is in the ResourceSet namespace
+    templates:
+      - templates/preview-rbac.yaml
+    set:
+      previewNamespace: flux-previews
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            gitlab: {}
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: ServiceAccount
+      - equal:
+          path: metadata.namespace
+          value: flux-previews
+      - equal:
+          path: metadata.name
+          value: preview-my-app
+
+  - it: ResourceSet service account can manage only declared preview resource kinds
+    templates:
+      - templates/preview-rbac.yaml
+    set:
+      previewNamespace: flux-previews
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            gitlab: {}
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: ClusterRole
+      - notContains:
+          path: rules
+          content:
+            resources: [clusterroles]
+
+  - it: ClusterRoleBinding binds only the preview ResourceSet service account
+    templates:
+      - templates/preview-rbac.yaml
+    set:
+      previewNamespace: flux-previews
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          preview:
+            gitlab: {}
+    documentIndex: 2
+    asserts:
+      - isKind:
+          of: ClusterRoleBinding
+      - equal:
+          path: subjects[0].name
+          value: preview-my-app
+      - equal:
+          path: subjects[0].namespace
+          value: flux-previews

@@ -1,0 +1,109 @@
+suite: RBAC generation (stable app)
+templates:
+  - templates/rbac.yaml
+
+tests:
+  - it: generates SA, Role, and RoleBinding per app (3 docs per app)
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: ServiceAccount lives in target app namespace
+    set:
+      controlNamespace: flux-system
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - isKind:
+          of: ServiceAccount
+      - equal:
+          path: metadata.namespace
+          value: my-app
+      - equal:
+          path: metadata.name
+          value: app-my-app
+
+  - it: Role lives in the app namespace (not controlNamespace)
+    set:
+      controlNamespace: flux-system
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 1
+    asserts:
+      - isKind:
+          of: Role
+      - equal:
+          path: metadata.namespace
+          value: my-app
+
+  - it: Role does not grant RBAC resource types (no escalation path)
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 1
+    asserts:
+      - notContains:
+          path: rules
+          content:
+            resources: [roles]
+          any: true
+      - notContains:
+          path: rules
+          content:
+            resources: [rolebindings]
+          any: true
+      - notContains:
+          path: rules
+          content:
+            resources: [serviceaccounts]
+          any: true
+
+  - it: RoleBinding references the SA in the target namespace
+    set:
+      controlNamespace: flux-system
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 2
+    asserts:
+      - isKind:
+          of: RoleBinding
+      - equal:
+          path: subjects[0].namespace
+          value: my-app
+      - equal:
+          path: subjects[0].name
+          value: app-my-app
+
+  - it: generates correct counts for two apps
+    set:
+      apps:
+        - name: app-a
+          repo: https://gitlab.com/org/app-a.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/app-a
+        - name: app-b
+          repo: https://gitlab.com/org/app-b.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/app-b
+    asserts:
+      - hasDocuments:
+          count: 6

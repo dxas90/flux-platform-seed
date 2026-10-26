@@ -40,7 +40,10 @@ def main():
             assert key in schemas, f'missing required served CRD: {key}'
         count = 0
         for path in sorted(v.ROOT.rglob('*.yaml')):
-            if any(part in path.parts for part in ('.cache', '.venv')):
+            # Helm templates are source files, not Kubernetes manifests. Their
+            # Go-template delimiters are intentionally not valid YAML until Helm
+            # renders them; chart unit tests validate the rendered resources.
+            if any(part in path.parts for part in ('.cache', '.venv', 'templates')):
                 continue
             for obj in v.documents(path.read_text()):
                 if not isinstance(obj, dict):

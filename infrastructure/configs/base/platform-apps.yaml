@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/dxas90/flux-platform-seed.git
     targetRevision: main
-    path: charts/app-template
+    path: charts/argocd-template
     helm:
       valueFiles:
         - catalog.yaml

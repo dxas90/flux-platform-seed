@@ -2,7 +2,7 @@
 # Do NOT put app registrations here; use catalog.yaml.
 
 # ── Token secrets ──────────────────────────────────────────────────────────────
-# These secrets must exist in the 'argocd' namespace before previews work:
+# These secrets must exist in the ArgoCD namespace before previews work:
 #
 #   kubectl -n argocd create secret generic github-token \
 #     --from-literal=token=<GITHUB_PAT>          # scopes: repo (read)

@@ -1,0 +1,52 @@
+# Platform defaults — managed by the platform team.
+# Do NOT add app registrations here; use catalog.yaml.
+
+# ── Control-plane namespace ──────────────────────────────────────────────────
+# Flux controllers, HelmReleases, and GitRepositories live here so that
+# the Helm storage and clone credentials are never reachable from the app
+# or preview namespace (namespace RBAC alone is not sufficient isolation for
+# truly untrusted workloads; see security notes in README).
+controlNamespace: flux-system
+
+# ── Preview namespace ────────────────────────────────────────────────────────
+# ResourceSetInputProvider and ResourceSet land here.  HelmRelease objects
+# are templated into flux-system so Helm storage and clone tokens cannot be
+# accessed from the preview namespace.
+previewNamespace: flux-previews
+
+# ── GitLab credential secret ─────────────────────────────────────────────────
+# Must exist in previewNamespace before preview providers work.
+# Secret must have keys: username (literal "oauth2" or "gitlab-ci-token")
+#                        password (personal/project access token, read_api scope)
+# Create with:
+#   kubectl -n flux-previews create secret generic gitlab-token-readonly \
+#     --from-literal=username=oauth2 \
+#     --from-literal=password=<GITLAB_PAT_read_api>
+# This secret is ONLY used by the ResourceSetInputProvider for API scanning —
+# it is distinct from the Git clone credential (gitlab-ssh-credentials-flux-system).
+previewTokenSecret: gitlab-token-readonly
+
+# ── Sync behaviour ───────────────────────────────────────────────────────────
+defaults:
+  targetRevision: main
+  interval: 10m
+  retryInterval: 2m
+  timeout: 5m
+  # syncOptions forwarded to every HelmRelease
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  preview:
+    # Interval at which the ResourceSetInputProvider re-scans for MRs
+    requeueAfterSeconds: 600
+    # GitRepository interval for each MR's source
+    sourceInterval: 1h
+    # Label that MRs must carry to receive a preview environment (opt-in)
+    filterLabel: "deploy/flux-preview"
+
+# ── App registrations ────────────────────────────────────────────────────────
+# Populated by catalog.yaml (via helm --values). Do not add apps here.
+apps: []

@@ -1,105 +1,80 @@
 # Application onboarding
 
-Applications are registered in this repository via a single catalog file. One pull request to one file onboards an app with its ArgoCD `AppProject`, stable `Application`, and (opt-in) preview `ApplicationSet`.
+This repository provides two independent Helm charts. Choose exactly one chart for each application so ArgoCD and Flux do not reconcile the same workload.
 
-## Quick start — add your app
+## ArgoCD applications
 
-Edit [`charts/app-template/catalog.yaml`](../charts/app-template/catalog.yaml):
+Register an application in `charts/argocd-template/catalog.yaml`:
 
 ```yaml
 apps:
-  - name: my-service
-    repo: https://github.com/my-org/my-service.git
-    chart: k8s/chart
-    registry: ghcr.io/my-org/my-service
+  - name: example-api
+    repo: https://git.example.invalid/org/example-api.git
+    chart: deploy/chart
+    registry: registry.example.invalid/org/example-api
+    preview:
+      github: {}
 ```
 
-Open a PR. ArgoCD syncs within seconds of merge.
+The ArgoCD platform Application renders `charts/argocd-template`. Each entry produces an `AppProject` and stable `Application`; the optional preview block produces an `ApplicationSet` using the configured Git provider generator.
 
-See [`charts/app-template/README.md`](../charts/app-template/README.md) for the full field reference, preview environment setup (GitHub PRs and GitLab MRs), and annotated examples.
+## Flux applications
 
-## What gets created
-
-For every catalog entry ArgoCD creates:
-
-| Resource | Scope |
-| --- | --- |
-| `AppProject/<name>` | Scopes the app's source repo and destination namespaces |
-| `Application/<name>` | Deploys the stable branch to the `<name>` namespace |
-| `ApplicationSet/<name>-preview` | *(opt-in)* One ephemeral Application per open PR/MR |
-
-The platform `AppProject` (`platform`) is the only project that can manage these resources. No direct edits to the `argocd` namespace are needed.
-
-## How it works
-
-The `platform-apps` ArgoCD Application renders `charts/app-template` with `catalog.yaml` as its values file. Every merged catalog change immediately triggers a sync:
-
-```text
-Git push → ArgoCD detects change → renders charts/app-template + catalog.yaml
-         → creates/updates AppProject + Application + ApplicationSet
-```
-
-The chart lives at `charts/app-template/`. `catalog.yaml` is co-located so ArgoCD can load it as a Helm values file without multi-source configuration.
-
-## Preview environments
-
-Preview environments are **opt-in**. To activate them, add a `preview` block to your catalog entry and label the PR/MR with **`preview`**.
+Register an application in `charts/fluxcd-template/catalog.yaml`:
 
 ```yaml
-# GitHub PR previews
-- name: my-service
-  ...
-  preview:
-    github: {}            # owner/repo extracted from the repo URL
-
-# GitLab MR previews (gitlab.com)
-- name: my-service
-  ...
-  preview:
-    gitlab:
-      projectId: "12345678"
-
-# Self-hosted GitLab
-- name: my-service
-  ...
-  preview:
-    gitlab:
-      url: https://gitlab.mycompany.com
-      projectId: "42"
+apps:
+  - name: example-api
+    repo: https://git.example.invalid/org/example-api.git
+    chart: deploy/chart
+    registry: registry.example.invalid/org/example-api
 ```
 
-Required secrets (one-time, platform admin):
+The `fluxcd-application-catalog` HelmRelease renders `charts/fluxcd-template` from the cluster's Flux GitRepository. Each entry produces a hardened namespace, NetworkPolicies, scoped workload RBAC, GitRepository, and HelmRelease.
+
+## Flux GitLab merge-request previews
+
+Flux previews use the Flux Operator ResourceSet API described in the [GitLab merge-request guide](https://fluxoperator.dev/docs/resourcesets/gitlab-merge-requests/). This chart supports GitLab MRs only because the provider is `GitLabMergeRequest`:
+
+```yaml
+apps:
+  - name: example-api
+    repo: https://git.example.invalid/org/example-api.git
+    chart: deploy/chart
+    registry: registry.example.invalid/org/example-api
+    preview:
+      gitlab: {}
+      domain: preview.example.invalid
+```
+
+The chart generates:
+
+- `ResourceSetInputProvider` in `flux-previews`, polling the GitLab project for the `deploy/flux-preview` label.
+- `ResourceSet` in `flux-previews`, with one generated namespace, pinned GitRepository, and HelmRelease per matching MR.
+- Preview RBAC and Pod Security labels.
+- A separate clone credential reference from the read-only GitLab API credential.
+
+The generated GitRepository is pinned to the MR commit SHA, preventing branch movement during a preview. ResourceSet garbage collection removes generated resources when an MR no longer matches the provider. A Flux `Receiver` can be added separately for lower event latency; polling remains the safe default.
+
+GitHub preview generation is not implemented by this Flux chart. Use the ArgoCD chart for GitHub PR ApplicationSet previews, or add a separately reviewed Flux provider integration.
+
+## Credentials and trust boundary
+
+Create these secrets outside Helm values:
+
+- API credential in `flux-previews`, with `username` and read-only `password`, for MR discovery.
+- Git clone credential in `flux-system`, with read-only repository access, for generated GitRepositories.
+
+MR previews execute chart and workload content from the MR. Enable them only for trusted repositories and review the generated RBAC and admission policies before allowing external contributors.
+
+## Validation
 
 ```sh
-# GitHub
-kubectl -n argocd create secret generic github-token \
-  --from-literal=token=<GITHUB_PAT>     # scopes: repo (read)
-
-# GitLab
-kubectl -n argocd create secret generic gitlab-token \
-  --from-literal=token=<GITLAB_PAT>     # scopes: api, read_repository
+helm unittest charts/argocd-template charts/fluxcd-template
+helm template argocd-template charts/argocd-template -f charts/argocd-template/catalog.yaml
+helm template fluxcd-template charts/fluxcd-template -f charts/fluxcd-template/values.yaml -f charts/fluxcd-template/catalog.yaml
+python scripts/validate.py
+python scripts/validate_schemas.py --operator-version 0.61.0
 ```
 
-## Namespace and RBAC model
-
-- Each app gets a dedicated namespace (`<name>`) and an optional preview namespace (`<name>-preview`).
-- The `AppProject` allows only the app's own source repository.
-- Cluster-scoped resources are blocked by default (`clusterResourceWhitelist: []`).
-- Allowed namespace-scoped kinds: ConfigMap, Secret, Service, ServiceAccount, PVC, Deployment, HPA, PDB, Ingress, NetworkPolicy, HTTPRoute.
-
-To allow additional resource kinds, add `namespaceResourceWhitelist` entries to the Helm chart's `templates/project.yaml`.
-
-## Advanced: manual AppProject / Application
-
-For teams that need finer control than the catalog provides (custom RBAC, multi-source Applications, non-standard destinations), the manual pattern is still supported:
-
-- `examples/onboarding/team-platform.yaml` — platform-side setup reference
-- `examples/onboarding/application.yaml` — Application registration reference
-
-Manual resources belong in `infrastructure/configs/<environment>/` so they are deployed by the `infra-configs` Flux Kustomization before any ArgoCD sync runs.
-
-## Ownership boundary
-
-Flux owns this repository and the ArgoCD controller. ArgoCD owns the objects rendered by `platform-apps`. Do not configure both controllers to reconcile the same workload resource.
-
-Removing a catalog entry prunes the `Application` and its workloads (automated prune is on). Decommission applications deliberately, including persistent data and external resources.
+See the chart READMEs for complete field references and controller-specific options.

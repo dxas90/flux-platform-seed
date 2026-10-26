@@ -64,17 +64,22 @@ def check_build(objects, path):
         if kind == 'HelmRelease':
             namespace = obj['metadata']['namespace']
             assert 'values' not in spec, f'inline values in {path}'
-            for ref in spec['valuesFrom']:
+            for ref in spec.get('valuesFrom', []):
                 found = [x for x in objects if x['kind'] == ref['kind'] and x['metadata']['name'] == ref['name'] and x['metadata'].get('namespace') == namespace]
                 assert len(found) == 1, f'missing values ConfigMap: {path}: {ref}'
                 assert ref.get('valuesKey', 'values.yaml') in found[0]['data']
                 documents(found[0]['data']['values.yaml'])
                 assert found[0]['metadata']['labels']['reconcile.fluxcd.io/watch'] == 'Enabled'
-            ref = spec.get('chartRef') or spec['chart']['spec']['sourceRef']
+            chart_spec = spec['chart']['spec']
+            if str(chart_spec.get('chart', '')).startswith('./'):
+                # A chart path in the Flux GitRepository is intentionally local
+                # to the source revision and does not require a Helm source CR.
+                continue
+            ref = spec.get('chartRef') or chart_spec['sourceRef']
             assert not ref.get('namespace') or ref['namespace'] == namespace
             sources = [x for x in objects if x['kind'] == ref['kind'] and x['metadata']['name'] == ref['name'] and x['metadata']['namespace'] == namespace]
             assert len(sources) == 1, f'missing Helm source in {path}'
-            version = sources[0]['spec']['ref']['tag'] if 'chartRef' in spec else spec['chart']['spec']['version']
+            version = sources[0]['spec']['ref']['tag'] if 'chartRef' in spec else chart_spec['version']
             assert re.fullmatch(r'v?\d+\.\d+\.\d+(?:[-+][\w.-]+)?', version), f'unpinned chart: {path}'
             assert spec['install']['remediation']['retries'] in range(1, 6)
         if kind == 'Kustomization' and obj['apiVersion'].startswith('kustomize.toolkit.fluxcd.io/'):

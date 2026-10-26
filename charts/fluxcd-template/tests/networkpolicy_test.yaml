@@ -1,0 +1,130 @@
+suite: NetworkPolicy generation
+templates:
+  - templates/networkpolicy.yaml
+
+tests:
+  - it: generates default-deny and allow-dns for each app (2 docs total)
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: doc-0 is default-deny with Ingress and Egress policy types
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.name
+          value: default-deny
+      - contains:
+          path: spec.policyTypes
+          content: Ingress
+      - contains:
+          path: spec.policyTypes
+          content: Egress
+
+
+  - it: doc-1 is allow-dns permitting port 53 UDP and TCP
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+    documentIndex: 1
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-dns
+      - contains:
+          path: spec.egress[0].ports
+          content:
+            port: 53
+            protocol: UDP
+      - contains:
+          path: spec.egress[0].ports
+          content:
+            port: 53
+            protocol: TCP
+
+  - it: generates 3 docs including allow-ingress-controller when networkPolicy.allowIngress is true
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          networkPolicy:
+            allowIngress: true
+    asserts:
+      - hasDocuments:
+          count: 3
+
+  - it: doc-2 is allow-ingress-controller when networkPolicy.allowIngress is true
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          networkPolicy:
+            allowIngress: true
+    documentIndex: 2
+    asserts:
+      - equal:
+          path: metadata.name
+          value: allow-ingress-controller
+
+  - it: allow-ingress-controller defaults ingressNamespace to kong
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          networkPolicy:
+            allowIngress: true
+    documentIndex: 2
+    asserts:
+      - equal:
+          path: spec.ingress[0].from[0].namespaceSelector.matchLabels["kubernetes.io/metadata.name"]
+          value: kong
+
+  - it: uses custom ingressNamespace when specified
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          networkPolicy:
+            allowIngress: true
+            ingressNamespace: ingress-nginx
+    documentIndex: 2
+    asserts:
+      - equal:
+          path: spec.ingress[0].from[0].namespaceSelector.matchLabels["kubernetes.io/metadata.name"]
+          value: ingress-nginx
+
+  - it: scopes all policies to the app namespace
+    set:
+      apps:
+        - name: backend
+          repo: https://gitlab.com/org/backend.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/backend
+    documentIndex: 0
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: backend
