@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - fluxcd-apps.yaml
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    reconcile.fluxcd.io/watch: Enabled
+configMapGenerator:
+- name: fluxcd-application-catalog-values
+  namespace: flux-system
+  files:
+  - values.yaml=fluxcd-apps-catalog-values.yaml

@@ -60,11 +60,4 @@
 #       tokenSecret: another-app-token-readonly  # separate API scan credential
 #       domain: another.preview.example.com
 
-apps:
-  - name: network-stats
-    repo: https://gitlab.com/dxas90/network-stats.git
-    chart: k8s/network-stats
-    registry: registry.gitlab.com/dxas90/network-stats
-    # Public repo — no gitSecretRef needed.
-    preview:
-      gitlab: {}
+apps: []
