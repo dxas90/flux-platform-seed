@@ -50,10 +50,16 @@ The default selection provides a broad local platform:
 - Fluent Bit
 - Alloy
 - Tempo
-- ArgoCD
 - Gateway API and Prometheus Operator CRDs
 
-Optional catalog entries are commented out in the base Kustomization.
+Optional catalog entries are commented out in the base Kustomization:
+
+- ArgoCD (same opt-in pattern as Kyverno — see below)
+- Kyverno
+- external-dns
+- node-feature-discovery
+- cloudnative-pg
+- dragonfly-operator
 
 ## Resource policy
 
@@ -84,6 +90,18 @@ logs.platform.example/collector: alloy
 ```
 
 Fluent Bit excludes that label. This supports gradual migration or workload-specific Alloy pipelines without collecting the same pod twice.
+
+## ArgoCD is opt-in
+
+ArgoCD follows the same opt-in pattern as Kyverno. It is commented out in the base and must be enabled per cluster by uncommenting three locations:
+
+1. `infrastructure/controllers/base/kustomization.yaml` — uncomment `# - argocd.yaml`
+2. `infrastructure/configs/base/kustomization.yaml` — uncomment `# - argocd` and `# - argocd-platform`
+3. `clusters/<env>/infrastructure.yaml` — uncomment the `argocd-platform` Kustomization block
+
+The `argocd-platform` Kustomization depends on `infra-configs` and carries a `healthChecks` entry waiting for the ArgoCD `HelmRelease` to be `Ready`. This guarantees the `AppProject`, `Application`, and `ApplicationSet` CRDs are registered before any application resources are applied.
+
+The `argocd-overrides` ConfigMap in each controller overlay is generated unconditionally (same as `kyverno-overrides`). It is consumed only when the HelmRelease is present.
 
 ## ArgoCD owns applications
 

@@ -1,4 +1,44 @@
-# Platform application catalog
+# ArgoCD application catalog
 # Add ArgoCD-managed applications here. Flux-managed applications belong in
 # charts/fluxcd-template/catalog.yaml. Do not register one workload in both.
+#
+# Required fields per app:
+#   name     — AppProject name, Application name, and resource prefix
+#   repo     — HTTPS clone URL
+#   chart    — path to the Helm chart inside the repo
+#   registry — container image registry path (no tag)
+#
+# Preview environments (ApplicationSet with pullRequest generator) are OPT-IN.
+# An app with no `preview:` block gets only an AppProject + Application.
+# To enable previews add a `preview:` block with either `gitlab:` or `github:`.
+#
+# Preview opt-in example — GitLab:
+#   - name: my-app
+#     repo: https://gitlab.com/myorg/my-app.git
+#     chart: k8s/my-app
+#     registry: registry.gitlab.com/myorg/my-app
+#     preview:
+#       gitlab:
+#         projectId: "12345678"   # numeric — Settings → General → Project ID
+#
+# Preview opt-in example — GitHub:
+#   - name: my-app
+#     repo: https://github.com/myorg/my-app.git
+#     chart: k8s/my-app
+#     registry: ghcr.io/myorg/my-app
+#     preview:
+#       github: {}
+#
+# To temporarily disable previews without removing the block:
+#   preview:
+#     enabled: false
+#     gitlab:
+#       projectId: "12345678"
+#
+# Secret prerequisites (argocd namespace, created once per provider):
+#   kubectl -n argocd create secret generic gitlab-token \
+#     --from-literal=token=<PAT>   # scopes: api, read_repository
+#   kubectl -n argocd label secret gitlab-token \
+#     argocd.argoproj.io/secret-type=scm-creds
+
 apps: []

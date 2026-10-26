@@ -1,0 +1,10 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# All resources here require ArgoCD CRDs (AppProject, Application, ApplicationSet).
+# Applied by argocd-platform Flux Kustomization which health-checks the ArgoCD
+# HelmRelease before proceeding — CRDs are guaranteed registered before these land.
+resources:
+  - ../default-project.yaml
+  - ../platform-project.yaml
+  - ../platform-apps.yaml
+  - ../argocd/notifications-patch.yaml

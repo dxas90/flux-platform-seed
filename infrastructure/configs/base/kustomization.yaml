@@ -1,15 +1,17 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - default-project.yaml
-  - platform-project.yaml
-  - platform-apps.yaml
   - fluxcd-application-catalog-values.yaml
   - fluxcd-apps.yaml
-  - argocd
   - cert-manager
   - grafana
   - notifications
   - priority-classes
   # Opt-in: enable after adding `kyverno` to infrastructure/controllers/base/kustomization.yaml.
   # - kyverno-policies
+  # Opt-in: enable both lines after adding `argocd` to the cluster controller overlay.
+  # `argocd` patches argocd-notifications-cm via SSA (requires ArgoCD to be installed).
+  # `argocd-platform` applies AppProject/Application resources (requires ArgoCD CRDs).
+  # Also uncomment the argocd-platform Flux Kustomization in clusters/<env>/infrastructure.yaml.
+  # - argocd
+  # - argocd-platform

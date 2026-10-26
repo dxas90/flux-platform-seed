@@ -4,7 +4,7 @@ This repository provides two independent Helm charts. Choose exactly one chart f
 
 ## ArgoCD applications
 
-Register an application in `charts/argocd-template/catalog.yaml`:
+ArgoCD is disabled by default. Enable it for the target cluster first — see [architecture docs](architecture.md#argocd-is-opt-in) for the three-location opt-in. Once running, register an application in `charts/argocd-template/catalog.yaml`:
 
 ```yaml
 apps:

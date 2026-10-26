@@ -124,10 +124,17 @@ apps:
 
 ## Prerequisites
 
-1. **ArgoCD** installed and running in the `argocd` namespace.
-2. **Git credentials** — Secrets in the `argocd` namespace:
+1. **ArgoCD enabled** for the target cluster. ArgoCD is opt-in — disabled by default like Kyverno.
+   Uncomment three locations to enable it:
+   - `infrastructure/controllers/base/kustomization.yaml` — uncomment `# - argocd.yaml`
+   - `infrastructure/configs/base/kustomization.yaml` — uncomment `# - argocd` and `# - argocd-platform`
+   - `clusters/<env>/infrastructure.yaml` — uncomment the `argocd-platform` Kustomization block
+
+   See [architecture docs](../../docs/architecture.md#argocd-is-opt-in) for details on the CRD dependency chain.
+
+2. **Git credentials** — Secrets in the `argocd` namespace (only needed when using preview generators):
    - `github-token`: GitHub PAT with `repo` scope
-   - `gitlab-token`: GitLab PAT with `api` scope
+   - `gitlab-token`: GitLab PAT with `api` and `read_repository` scopes, labelled `argocd.argoproj.io/secret-type=scm-creds`
 
 Create them with:
 
@@ -137,6 +144,10 @@ kubectl -n argocd create secret generic github-token \
 
 kubectl -n argocd create secret generic gitlab-token \
   --from-literal=token=<GITLAB_PAT>
+
+# Required label for the ApplicationSet pullRequest generator:
+kubectl -n argocd label secret gitlab-token \
+  argocd.argoproj.io/secret-type=scm-creds
 ```
 
 ---

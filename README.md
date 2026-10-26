@@ -16,11 +16,11 @@ Enabled by default:
 - kube-prometheus-stack, with its bundled Grafana disabled
 - Grafana Operator and a Grafana instance
 - Loki, Fluent Bit, Alloy, and Tempo
-- ArgoCD
 - Gateway API and Prometheus Operator CRDs
 
-Available but disabled in `infrastructure/controllers/base/kustomization.yaml`:
+Available but disabled in `infrastructure/controllers/base/kustomization.yaml` (uncomment to enable):
 
+- ArgoCD (requires three-location opt-in — see [architecture docs](docs/architecture.md#argocd-is-opt-in))
 - external-dns
 - Kyverno
 - node-feature-discovery
