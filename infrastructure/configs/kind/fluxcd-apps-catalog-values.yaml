@@ -1,0 +1,143 @@
+controlNamespace: flux-system
+previewNamespace: flux-previews
+previewTokenSecret: gitlab-token-readonly
+defaults:
+  targetRevision: main
+  interval: 10m
+  timeout: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  preview:
+    requeueAfterSeconds: 600
+    sourceInterval: 1h
+    filterLabel: deploy/flux-preview
+apps:
+  # GitHub preview blocks are retained as catalog metadata. The Flux chart
+  # currently generates MR previews for GitLab only; these entries reconcile
+  # their stable releases without GitHub preview resources.
+  - name: learn-go
+    repo: https://github.com/dxas90/learn-go.git
+    chart: k8s/chart
+    registry: ghcr.io/dxas90/learn-go
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      github: {}
+  - name: learn-java
+    repo: https://github.com/dxas90/learn-java.git
+    chart: k8s/learn-java
+    registry: ghcr.io/dxas90/learn-java
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      github: {}
+  - name: learn-node
+    repo: https://github.com/dxas90/learn-node.git
+    chart: k8s/learn-node
+    registry: ghcr.io/dxas90/learn-node
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      github: {}
+  - name: learn-php
+    repo: https://github.com/dxas90/learn-php.git
+    chart: k8s/learn-php
+    registry: ghcr.io/dxas90/learn-php
+    targetRevision: main
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      github: {}
+  - name: learn-python
+    repo: https://github.com/dxas90/learn-python.git
+    chart: k8s/learn-python
+    registry: ghcr.io/dxas90/learn-python
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      github: {}
+  - name: learn-ruby
+    repo: https://github.com/dxas90/learn-ruby.git
+    chart: k8s/learn-ruby
+    registry: ghcr.io/dxas90/learn-ruby
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      github: {}
+  - name: learn-rust
+    repo: https://github.com/dxas90/learn-rust.git
+    chart: k8s/chart
+    registry: ghcr.io/dxas90/learn-rust
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      github: {}
+  - name: network-stats
+    repo: https://gitlab.com/dxas90/network-stats.git
+    chart: k8s/network-stats
+    registry: registry.gitlab.com/dxas90/network-stats
+    extraValues:
+      env:
+        variables:
+          APP_ENV: "production"
+      podSecurityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      securityContext:
+        allowPrivilegeEscalation: false
+    preview:
+      gitlab:
+        projectId: "30270366"
