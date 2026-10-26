@@ -138,13 +138,9 @@ spec:
         upgrade:
           remediation:
             retries: 2
+        {{- $host := printf "%s-<< inputs.id >>.%s" .name (default "preview.example.com" ((.preview).domain)) }}
+        {{- $previewValues := dict "image" (dict "repository" .registry "tag" "<< inputs.sha >>") "ingress" (dict "enabled" true "hosts" (list (dict "host" $host))) }}
         values:
-          image:
-            repository: {{ .registry }}
-            tag: << inputs.sha >>
-          ingress:
-            enabled: true
-            hosts:
-              - host: {{ .name }}-<< inputs.id >>.{{ default "preview.example.com" ((.preview).domain) }}
+          {{- mergeOverwrite (deepCopy (default dict .extraValues)) $previewValues | toYaml | nindent 10 }}
 {{- end }}
 {{- end }}

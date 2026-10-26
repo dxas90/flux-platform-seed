@@ -5,6 +5,33 @@ templates:
   - templates/preview-rbac.yaml
 
 tests:
+  - it: passes app chart overrides to previews without changing the MR image tag
+    template: templates/preview-resourceset.yaml
+    set:
+      apps:
+        - name: my-app
+          repo: https://gitlab.com/org/my-app.git
+          chart: k8s/chart
+          registry: registry.gitlab.com/org/my-app
+          extraValues:
+            podSecurityContext:
+              seccompProfile:
+                type: RuntimeDefault
+            securityContext:
+              allowPrivilegeEscalation: false
+          preview:
+            gitlab: {}
+    asserts:
+      - equal:
+          path: spec.resources[5].spec.values.securityContext.allowPrivilegeEscalation
+          value: false
+      - equal:
+          path: spec.resources[5].spec.values.podSecurityContext.seccompProfile.type
+          value: RuntimeDefault
+      - equal:
+          path: spec.resources[5].spec.values.image.tag
+          value: << inputs.sha >>
+
   - it: generates no preview resources when preview block is absent
     set:
       apps:

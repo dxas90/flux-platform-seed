@@ -30,5 +30,11 @@ data:
         repo: https://gitlab.com/dxas90/network-stats.git
         chart: k8s/network-stats
         registry: registry.gitlab.com/dxas90/network-stats
+        extraValues:
+          podSecurityContext:
+            seccompProfile:
+              type: RuntimeDefault
+          securityContext:
+            allowPrivilegeEscalation: false
         preview:
           gitlab: {}

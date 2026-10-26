@@ -7,7 +7,7 @@ uses app-level targetRevision override when provided:
         app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/part-of: my-app
       name: my-app
-      namespace: flux-system
+      namespace: my-app
     spec:
       chart:
         spec:

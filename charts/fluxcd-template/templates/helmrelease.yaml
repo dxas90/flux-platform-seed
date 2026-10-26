@@ -6,7 +6,7 @@ apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
   name: {{ .name }}
-  namespace: {{ $ctrl }}
+  namespace: {{ .name }}
   labels:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/part-of: {{ .name }}

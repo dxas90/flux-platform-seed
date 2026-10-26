@@ -18,7 +18,7 @@ tests:
       - hasDocuments:
           count: 2
 
-  - it: HelmRelease lives in controlNamespace
+  - it: HelmRelease lives beside its impersonation ServiceAccount
     set:
       controlNamespace: flux-system
       apps:
@@ -30,7 +30,7 @@ tests:
     asserts:
       - equal:
           path: metadata.namespace
-          value: flux-system
+          value: my-app
 
   - it: targetNamespace is the app namespace
     set:
