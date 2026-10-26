@@ -1,6 +1,30 @@
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: seed
+networking:
+  apiServerAddress: "127.0.0.1"
+  apiServerPort: 6443
+  podSubnet: "10.200.0.0/16"
+  serviceSubnet: "10.101.0.0/16"
+  # the default CNI will not be installed
+  # disableDefaultCNI: true
+featureGates:
+  # any feature gate can be enabled here with "Name": true
+  # or disabled here with "Name": false
+  # not all feature gates are tested, however
+  "WatchListCompression": true
+# add to the apiServer certSANs the name of the docker (dind) service in order to be able to reach the cluster through it
+kubeadmConfigPatchesJSON6902:
+  - group: kubeadm.k8s.io
+    version: v1beta2
+    kind: ClusterConfiguration
+    patch: |
+      - op: add
+        path: /apiServer/certSANs/-
+        value: k8s.127.0.0.1.nip.io
+      - op: add
+        path: /apiServer/certSANs/-
+        value: docker
 nodes:
   - role: control-plane
     extraPortMappings:
@@ -10,5 +34,23 @@ nodes:
       - containerPort: 443
         hostPort: 8443
         protocol: TCP
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "role=control-plane"
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            register-with-taints: "kind=presence:NoSchedule"
   - role: worker
+    labels:
+      tier: frontend
   - role: worker
+    labels:
+      tier: backend
+  - role: worker
+    labels:
+      tier: backend
