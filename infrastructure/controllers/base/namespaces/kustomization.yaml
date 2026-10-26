@@ -1,14 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- argocd.yaml
+# - argocd.yaml
 - cert-manager.yaml
-- cnpg-system.yaml
-- dragonfly-system.yaml
+# - cnpg-system.yaml
+# - dragonfly-system.yaml
 - external-dns.yaml
 - external-secrets.yaml
 - flux-previews.yaml
 - keda.yaml
-- kyverno.yaml
-- node-feature-discovery.yaml
+# - kyverno.yaml
+# - node-feature-discovery.yaml
 - observability.yaml
