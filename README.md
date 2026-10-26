@@ -29,20 +29,51 @@ Available but disabled in `infrastructure/controllers/base/kustomization.yaml` (
 
 ## Architecture
 
-```text
-flux-operator
-└── FluxInstance/flux
-    ├── Flux controllers
-    └── GitRepository/flux-system + Kustomization/flux-system
-        ├── infra-controllers  → namespaces, CRDs, Helm repositories and releases
-        └── infra-configs      → resources that require those controllers/CRDs
-        └── application delivery
-            ├── ArgoCD platform Application → charts/argocd-template
-            │   ├── AppProject + Application
-            │   └── ApplicationSet (optional GitHub/GitLab previews)
-            └── Flux HelmRelease → charts/fluxcd-template
-                ├── hardened stable app resources
-                └── ResourceSetInputProvider + ResourceSet (optional GitLab MR previews)
+```mermaid
+flowchart TD
+    FO["Flux Operator"]
+    FI["FluxInstance / flux"]
+    ROOT["GitRepository + Kustomization<br/>flux-system"]
+
+    IC["infra-controllers<br/>Namespaces · CRDs · Helm repositories<br/>Helm releases"]
+    ICFG["infra-configs<br/>Resources requiring controllers / CRDs"]
+
+    subgraph DELIVERY["Application Delivery"]
+        direction TB
+
+        subgraph ARGO["ArgoCD"]
+            AT["charts/argocd-template"]
+            AA["AppProject + Application"]
+            AS["ApplicationSet<br/>Optional GitHub / GitLab previews"]
+            AT --> AA
+            AT --> AS
+        end
+
+        subgraph FLUX["Flux CD"]
+            FT["charts/fluxcd-template<br/>(HelmRelease)"]
+            FS["Hardened stable app resources"]
+            FR["ResourceSetInputProvider + ResourceSet<br/>Optional GitLab MR previews"]
+            FT --> FS
+            FT --> FR
+        end
+    end
+
+    FO --> FI
+    FI --> ROOT
+
+    ROOT --> IC
+    ROOT --> ICFG
+    ICFG --> DELIVERY
+
+    classDef bootstrap fill:#dbeafe,stroke:#2563eb,color:#1e3a8a
+    classDef infra fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef argo fill:#fef3c7,stroke:#d97706,color:#78350f
+    classDef flux fill:#f3e8ff,stroke:#9333ea,color:#581c87
+
+    class FO,FI,ROOT bootstrap
+    class IC,ICFG infra
+    class AT,AA,AS argo
+    class FT,FS,FR flux
 ```
 
 The operator creates and owns the Flux controllers. `FluxInstance` configures the distribution and points Flux at one cluster directory in this repository. The cluster entrypoint creates two ordered Flux Kustomizations:
