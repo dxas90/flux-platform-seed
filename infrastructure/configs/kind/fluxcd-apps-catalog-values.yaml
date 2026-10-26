@@ -28,6 +28,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:
@@ -43,6 +44,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:
@@ -58,6 +60,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:
@@ -74,6 +77,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:
@@ -89,6 +93,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:
@@ -104,6 +109,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:
@@ -119,6 +125,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:
@@ -134,6 +141,7 @@ apps:
         variables:
           APP_ENV: "production"
       podSecurityContext:
+        runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       securityContext:

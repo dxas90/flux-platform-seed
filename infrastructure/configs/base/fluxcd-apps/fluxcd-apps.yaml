@@ -25,9 +25,13 @@ spec:
     - kind: ConfigMap
       name: fluxcd-application-catalog-values
       valuesKey: values.yaml
+  # This chart installs controller resources, not workloads. Child HelmReleases
+  # own readiness; waiting here can roll back unrelated apps and namespaces.
   install:
+    disableWait: true
     remediation:
       retries: 3
   upgrade:
+    disableWait: true
     remediation:
       retries: 3
