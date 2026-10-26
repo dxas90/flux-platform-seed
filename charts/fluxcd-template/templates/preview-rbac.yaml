@@ -27,7 +27,8 @@ metadata:
     app.kubernetes.io/component: preview
 rules:
   - apiGroups: [""]
-    resources: [namespaces, serviceaccounts, configmaps, secrets, services, persistentvolumeclaims, pods]
+    resources: [namespaces, serviceaccounts, configmaps, secrets, services,
+                persistentvolumeclaims, pods, endpoints, events]
     verbs: [get, list, watch, create, update, patch, delete]
   - apiGroups: [apps]
     resources: [deployments, statefulsets, daemonsets, replicasets]
@@ -43,6 +44,9 @@ rules:
     verbs: [get, list, watch, create, update, patch, delete]
   - apiGroups: [networking.k8s.io]
     resources: [ingresses, networkpolicies]
+    verbs: [get, list, watch, create, update, patch, delete]
+  - apiGroups: [gateway.networking.k8s.io]
+    resources: [httproutes, grpcroutes, tcproutes, tlsroutes, referencegrants]
     verbs: [get, list, watch, create, update, patch, delete]
   - apiGroups: [rbac.authorization.k8s.io]
     resources: [roles, rolebindings]
