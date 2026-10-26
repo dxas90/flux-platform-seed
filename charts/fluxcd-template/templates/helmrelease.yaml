@@ -13,7 +13,7 @@ metadata:
 spec:
   serviceAccountName: app-{{ .name }}
   targetNamespace: {{ .name }}
-  storageNamespace: {{ $ctrl }}
+  storageNamespace: {{ .name }}
   releaseName: {{ .name }}
   interval: {{ default $defaults.interval .interval }}
   timeout: {{ $defaults.timeout }}

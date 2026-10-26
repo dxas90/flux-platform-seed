@@ -45,7 +45,7 @@ tests:
           path: spec.targetNamespace
           value: my-app
 
-  - it: storageNamespace is controlNamespace (Helm secrets isolated)
+  - it: storageNamespace is the app namespace (SA has access there, not in flux-system)
     set:
       controlNamespace: flux-system
       apps:
@@ -57,7 +57,7 @@ tests:
     asserts:
       - equal:
           path: spec.storageNamespace
-          value: flux-system
+          value: my-app
 
   - it: chart source uses revision reconciliation
     set:

@@ -23,7 +23,7 @@ uses app-level targetRevision override when provided:
       interval: 10m
       releaseName: my-app
       serviceAccountName: app-my-app
-      storageNamespace: flux-system
+      storageNamespace: my-app
       targetNamespace: my-app
       timeout: 5m
       upgrade:
