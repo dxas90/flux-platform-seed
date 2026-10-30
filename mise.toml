@@ -6,7 +6,7 @@ kubectl = "1.37.1"
 kustomize = "5.8.3"
 python = "3.15.1"
 pre-commit = "4.7.0"
-uv = "0.13.4"
+uv = "0.13.6"
 
 [tasks.validate]
 description = "Run text hygiene, manifest, dependency, and unit checks"
